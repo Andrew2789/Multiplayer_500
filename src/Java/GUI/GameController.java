@@ -7,11 +7,11 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
 import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
-import javax.swing.text.html.ListView;
 import java.net.URL;
 import java.util.*;
 
@@ -30,8 +30,6 @@ public class GameController implements Initializable {
     private List<CardView> trickView = new ArrayList<>();
     private List<CardView> handView = new ArrayList<>();
     private List<Pane> handViewBackgrounds = new ArrayList<>();
-
-    private GameClient gameClient;
 
     private int trickSize = 4, handSize = 10;
 
@@ -66,7 +64,9 @@ public class GameController implements Initializable {
     }
 
     @Override
-    public void initialize(URL location, ResourceBundle resources){
+    public void initialize(URL location, ResourceBundle resources) {
+        Main.setGameController(this);
+
         //Load card images
         final char[] suits = {'s', 'c', 'd', 'h'};
         for (char suit: suits) {
@@ -98,7 +98,7 @@ public class GameController implements Initializable {
             card.setOnMouseReleased(event -> {
                 if (card.isVisible()) {
                     background.setStyle("-fx-background-color: #000; -fx-background-radius: 8%; -fx-background-insets: 1px 1px 1px 1px; -fx-padding: 1px 1px 1px 1px;");
-                    gameClient.cardPlayed(card.getCard());
+                    Main.gameClient.cardPlayed(card.getCard());
                 }
             });
             background.getChildren().add(card);
@@ -115,29 +115,5 @@ public class GameController implements Initializable {
             playedCardsPane.add(card, i, 0);
             trickView.add(card);
         }
-
-
-        int port = 1236;
-        Main.createServer(port, () -> System.out.println("failed to host"), () -> serverUp = true);
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            Main.killThreads();
-            System.exit(1);
-        }
-        System.out.println("hosted");
-        gameClient = Main.joinGame("127.0.0.1", port, () -> System.out.println("failed to connect to host"), () -> gameJoined = true, this);
-        while (!gameJoined && !serverUp) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                Main.killThreads();
-                System.exit(1);
-            }
-        }
-        System.out.println("connected");
-
-        //cardPane.prefHeightProperty().bind(handViewBackgrounds.get(0).heightProperty());
-
     }
 }

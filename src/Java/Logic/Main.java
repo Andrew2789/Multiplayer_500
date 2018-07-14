@@ -1,31 +1,37 @@
 package Java.Logic;
 
 import Java.GUI.GameController;
+import java.io.IOException;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-
 public class Main extends Application {
     private static GameServer gameServer;
-    private static GameClient gameClient;
-    private static Scene scene;
+    public static GameClient gameClient;
+    private static Scene login, game;
+    private static Stage stage;
+
+    private static GameController gameController;
+
+    public static void setGameController(GameController gameController) {
+        Main.gameController = gameController;
+    }
 
     public static void createServer(int port, Runnable onFail, Runnable onSuccess) {
         gameServer = new GameServer(port, 1, onFail, onSuccess, () -> {});
         gameServer.start();
     }
 
-    public static GameClient joinGame(String ipAddress, int port, Runnable onFail, Runnable onSuccess, GameController gameController) {
+    public static void joinGame(String ipAddress, int port, Runnable onFail, Runnable onSuccess) {
         gameClient = new GameClient(ipAddress, port, onFail, onSuccess, () -> {}, gameController);
         gameClient.start();
+    }
+
+    public GameClient getGame() {
         return gameClient;
     }
 
@@ -40,19 +46,35 @@ public class Main extends Application {
         gameClient = null;
     }
 
+    public static void showLogin() {
+        stage.setMinWidth(0);
+        stage.setMinHeight(0);
+        stage.setWidth(500);
+        stage.setHeight(160);
+        stage.setResizable(false);
+        stage.setScene(login);
+    }
+
+    public static void showGame() {
+        stage.setMinWidth(600);
+        stage.setMinHeight(500);
+        stage.setWidth(1366);
+        stage.setHeight(768);
+        stage.setResizable(true);
+        stage.setScene(game);
+    }
+
     @Override
     public void start(Stage stage) {
         /*System.setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream("stderr.log")), true));
         System.setOut(new PrintStream(new BufferedOutputStream(new FileOutputStream("stdout.log")), true));*/
+        Main.stage = stage;
         stage.setTitle("Multiplayer 500");
         stage.getIcons().add(new Image(getClass().getResourceAsStream("/Resources/Images/club.png")));
-        stage.setMinWidth(600);
-        stage.setMinHeight(500);
         try {
-			//location = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParentFile().getAbsolutePath();
-			Parent root = FXMLLoader.load(getClass().getResource("/Resources/FXML/frame.fxml"));
-			scene = new Scene(root, 1366, 768);
-			stage.setScene(scene);
+            login = new Scene(FXMLLoader.load(getClass().getResource("/Resources/FXML/connection.fxml")), 500, 160);
+            game = new Scene(FXMLLoader.load(getClass().getResource("/Resources/FXML/game.fxml")), 1366, 768);
+            showLogin();
 			stage.show();
 		} catch (IOException e) {
         	e.printStackTrace();

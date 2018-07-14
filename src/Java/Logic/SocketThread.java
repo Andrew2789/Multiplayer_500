@@ -72,49 +72,54 @@ public abstract class SocketThread extends Thread {
 		return clientSockets.size() == connections;
 	}
 
-	public void run() {
-		if (ownsSocket) { //Only set up socket connections and io streams if owner, otherwise it should already be done
-			if (ipAddress != null) {
-				try {
-					Socket socket = new Socket();
-					socket.connect(new InetSocketAddress(InetAddress.getByName(ipAddress), port), connectTimeout);
-					socket.setSoTimeout(checkTimeout);
-					clientSockets.add(new ClientSocket(socket));
-				} catch (IOException e) {
-					onFail.run();
-					return;
-				}
-			} else {
-				try {
-					serverSocket = new ServerSocket(port);
-					serverSocket.setSoTimeout(checkTimeout);
-				} catch (IOException e) {
-					serverSocket = null;
-					onFail.run();
-					return;
-				}
+	private boolean initializeSockets() throws IOException {
+		if (ipAddress != null) {
+			//If there is an ip address specified, this must be a client
+			try {
+				Socket socket = new Socket();
+				socket.connect(new InetSocketAddress(InetAddress.getByName(ipAddress), port), connectTimeout);
+				socket.setSoTimeout(checkTimeout);
+				clientSockets.add(new ClientSocket(socket));
+			} catch (IOException e) {
+				onFail.run();
+				return false;
+			}
+		} else {
+			//If there is no ip address specified, this must be a server
+			try {
+				serverSocket = new ServerSocket(port);
+				serverSocket.setSoTimeout(checkTimeout);
+			} catch (IOException e) {
+				serverSocket = null;
+				onFail.run();
+				return false;
 			}
 
-			try {
-				//Accept connection if server
-				if (serverSocket != null) {
-					while (!exit && !stopWaiting && clientSockets.size() < connections) {
-						try {
-							Socket socket = serverSocket.accept();
-							socket.setSoTimeout(checkTimeout);
-                            clientSockets.add(new ClientSocket(socket));
-						} catch (SocketTimeoutException e) {
-						}
+			if (serverSocket != null) {
+				while (!exit && !stopWaiting && clientSockets.size() < connections) {
+					try {
+						Socket socket = serverSocket.accept();
+						socket.setSoTimeout(checkTimeout);
+						clientSockets.add(new ClientSocket(socket));
+					} catch (SocketTimeoutException e) {
 					}
-					if (exit) {
-						return;
-					}
-                    connections = clientSockets.size();
 				}
+				if (exit) {
+					return false;
+				}
+				connections = clientSockets.size();
+			}
+		}
+		return true;
+	}
 
-				onSuccess.run();
-
-				afterConnection();
+	public void run() {
+		if (ownsSocket) { //Only set up socket connections and io streams if owner, otherwise it should already be done
+			try {
+				if (initializeSockets()) {
+					onSuccess.run();
+					afterConnection();
+				}
 			} catch (IOException | InterruptedException e) {
 				e.printStackTrace();
 			}
