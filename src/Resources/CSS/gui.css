@@ -2,6 +2,12 @@
 	-fx-background-color: #1d3549;
 }
 
+.image-view {
+    -fx-padding: 10px;
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 5px;
+}
+
 
 .scroll-pane,
 .scroll-pane .viewport,
@@ -9,8 +15,9 @@
 	-fx-background-color: transparent;
 }
 .scroll-pane .scroll-bar .thumb {
-	-fx-background-color: #396a93;
+    -fx-background-color: #396a93;
 }
+
 
 
 /*Roughly based off the record-sales button from http://fxexperience.com/2011/12/styling-fx-buttons-with-css/*/
@@ -67,32 +74,6 @@
 }
 
 
-.tree-view,
-.tree-view:focused {
-	-fx-font-size: 14px;
-	-fx-focus-color: transparent;
-	-fx-faint-focus-color: transparent;
-	-fx-background-color: #396a93;
-	-fx-box-border: hidden;
-	-fx-background-radius: 0px;
-	-fx-background-insets: 0px;
-}
-.tree-view .tree-cell {
-	-fx-background-color: #396a93;
-	-fx-text-fill: #edf3f8;
-}
-.tree-view .tree-cell:selected {
-	-fx-background-color: #4785b8;
-}
-.tree-view .virtual-flow .corner,
-.tree-view .virtual-flow .scroll-bar {
-	-fx-background-color: #396a93;
-}
-.tree-view .virtual-flow .scroll-bar .thumb {
-	-fx-background-color: #6c9dc6;
-}
-
-
 .chart .axis:left {
 	-fx-tick-length: 10px;
 	-fx-tick-label-gap:4px;
@@ -123,17 +104,45 @@
 }
 
 
-#upSpeedLabel {
-	-fx-text-fill: #bbffb7;
-}
-#downSpeedLabel {
-	-fx-text-fill: #c1b7ff;
-}
-
-
 .progress-bar .track {
 	-fx-background-color: transparent;
 }
 .progress-bar .bar {
 	-fx-background-color: #1d3549;
+}
+
+
+.list-view:focused {
+    -fx-background-color: #396a93, #396a93;
+    -fx-background-insets: 0, 1;
+    -fx-padding: 1;
+}
+
+.list-view .virtual-flow .scroll-bar .thumb,
+.tree-view .virtual-flow .scroll-bar .thumb,
+.table-view .virtual-flow .scroll-bar .thumb,
+.tree-table-view .virtual-flow .scroll-bar .thumb {
+    -fx-background-color: #6c9dc6;
+}
+
+.list-cell,
+.table-cell,
+.tree-table-cell {
+    -fx-text-fill: #edf3f8;
+}
+
+
+
+.list-view .list-cell,
+.tree-view .tree-cell,
+.table-row-cell,
+.tree-table-row-cell {
+    -fx-background-color: #396a93;
+}
+
+.list-view .list-cell:selected,
+.tree-view .tree-cell:selected,
+.table-row-cell:selected,
+.tree-table-row-cell:selected {
+    -fx-background-color: #4785b8;
 }

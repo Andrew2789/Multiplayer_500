@@ -1,5 +1,6 @@
 package Java.Logic;
 
+import Java.GUI.GameController;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -17,6 +18,17 @@ public class Main extends Application {
     private static GameClient gameClient;
     private static Scene scene;
 
+    public static void createServer(int port, Runnable onFail, Runnable onSuccess) {
+        gameServer = new GameServer(port, 1, onFail, onSuccess, () -> {});
+        gameServer.start();
+    }
+
+    public static GameClient joinGame(String ipAddress, int port, Runnable onFail, Runnable onSuccess, GameController gameController) {
+        gameClient = new GameClient(ipAddress, port, onFail, onSuccess, () -> {}, gameController);
+        gameClient.start();
+        return gameClient;
+    }
+
     public static void killThreads() {
     	if (gameServer != null) {
             gameServer.exit();
@@ -33,9 +45,9 @@ public class Main extends Application {
         /*System.setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream("stderr.log")), true));
         System.setOut(new PrintStream(new BufferedOutputStream(new FileOutputStream("stdout.log")), true));*/
         stage.setTitle("Multiplayer 500");
-        stage.getIcons().add(new Image(getClass().getResourceAsStream("/Resources/Images/wateryarrow.png")));
-        stage.setMinHeight(400);
-        stage.setMinWidth(300);
+        stage.getIcons().add(new Image(getClass().getResourceAsStream("/Resources/Images/club.png")));
+        stage.setMinWidth(600);
+        stage.setMinHeight(500);
         try {
 			//location = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParentFile().getAbsolutePath();
 			Parent root = FXMLLoader.load(getClass().getResource("/Resources/FXML/frame.fxml"));

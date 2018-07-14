@@ -2,13 +2,14 @@ package Java.Logic;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class SocketThread extends Thread {
 	private Thread t;
     private Runnable onFail, onSuccess, onDisconnect;
 	private ServerSocket serverSocket = null;
-    protected List<ClientSocket> clientSockets;
+    protected List<ClientSocket> clientSockets = new ArrayList<>();
 	protected static final int checkTimeout = 100;
 	protected boolean exit = false, stopWaiting = false, ownsSocket = true;
 	protected String ipAddress = null;

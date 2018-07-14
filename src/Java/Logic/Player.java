@@ -1,5 +1,6 @@
 package Java.Logic;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Player {
@@ -8,6 +9,7 @@ public class Player {
 
     public Player(String name) {
         this.name = name;
+        hand = new ArrayList<>();
     }
 
     public Player(String name, List<Card> hand) {

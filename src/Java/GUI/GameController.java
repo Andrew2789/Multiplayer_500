@@ -2,42 +2,71 @@ package Java.GUI;
 
 import Java.Logic.Card;
 import Java.Logic.GameClient;
+import Java.Logic.Main;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
-
+import javafx.scene.layout.StackPane;
+import javax.swing.text.html.ListView;
 import java.net.URL;
 import java.util.*;
 
 public class GameController implements Initializable {
     @FXML
-    private GridPane mainPane, cardPane;
+    private GridPane cardPane, playedCardsPane, mainPane;
     @FXML
     private Pane gridSize;
+    @FXML
+    private Label roundInfoLabel;
+    @FXML
+    private ListView roundOrderList;
 
     private Map<Card, Image> cardImages = new HashMap<>();
 
-    private List<Card> hand = new ArrayList<>();
-    private List<ImageView> handView = new ArrayList<>();
+    private List<CardView> trickView = new ArrayList<>();
+    private List<CardView> handView = new ArrayList<>();
+    private List<Pane> handViewBackgrounds = new ArrayList<>();
 
-    private GameClient client;
+    private GameClient gameClient;
+
+    private int trickSize = 4, handSize = 10;
+
+    private boolean serverUp = false, gameJoined = false;
 
     public void updateHand(List<Card> hand) {
-        this.hand = hand;
-        for (int i = 0; i < hand.size(); i++) {
-            handView.get(i).setImage(cardImages.get(hand.get(i)));
-            System.out.println("setting " + i);
+        if (hand.size() > handSize) {
+            System.err.println(String.format("Trick size larger than %d (%d).", handSize, hand.size()));
+            return;
         }
-        for (int i = hand.size(); i < 10; i++) {
-            handView.get(i).setImage(null);
+        for (int i = 0; i < hand.size(); i++) {
+            handView.get(i).setCard(hand.get(i), cardImages.get(hand.get(i)));
+            handViewBackgrounds.get(i).setVisible(true);
+        }
+        for (int i = hand.size(); i < handSize; i++) {
+            handViewBackgrounds.get(i).setVisible(false);
+        }
+    }
+
+    public void updateTrick(List<Card> trick) {
+        if (trick.size() > trickSize) {
+            System.err.println(String.format("Trick size larger than %d (%d).", trickSize, trick.size()));
+            return;
+        }
+        for (int i = 0; i < trick.size(); i++) {
+            trickView.get(i).setCard(trick.get(i), cardImages.get(trick.get(i)));
+            trickView.get(i).setVisible(true);
+        }
+        for (int i = trick.size(); i < 4; i++) {
+            trickView.get(i).setVisible(false);
         }
     }
 
     @Override
-    public void initialize(URL location, ResourceBundle resources) {
+    public void initialize(URL location, ResourceBundle resources){
         //Load card images
         final char[] suits = {'s', 'c', 'd', 'h'};
         for (char suit: suits) {
@@ -49,33 +78,66 @@ public class GameController implements Initializable {
         Card joker = new Card('j', 0);
         cardImages.put(joker, new Image(getClass().getResourceAsStream(String.format("/Resources/Images/Cards/%s.png", joker))));
 
-        for (int i = 0; i < 10; i++) {
-            ImageView card = new ImageView();
+        for (int i = 0; i < handSize; i++) {
+            Pane background = new StackPane();
+            //background.setPrefHeight(0);
+            background.setStyle("-fx-background-color: #000; -fx-background-radius: 8%; -fx-background-insets: 1px 1px 1px 1px; -fx-padding: 1px 1px 1px 1px;");
+            background.setPrefHeight(0);
+
+            CardView card = new CardView();
             card.setPreserveRatio(true);
             card.setSmooth(true);
             card.fitWidthProperty().bind(gridSize.widthProperty());
-            final int index = i;
-            card.setOnMouseClicked(event -> {
-                if (hand.size() > index) {
-                    card.setStyle("-fx-border-width: 2px; -fx-border-radius: 4px; -fx-border-color: #ffffff");
+            StackPane.setAlignment(card, Pos.CENTER);
+            card.setOnMousePressed(event -> {
+                if (card.isVisible()) {
+                    background.setStyle("-fx-background-color: #4785b8; -fx-background-radius: 8%; -fx-background-insets: 1px 1px 1px 1px; -fx-padding: 1px 1px 1px 1px;");
                     //client.cardPlayed(hand.get(index));
                 }
             });
-            cardPane.add(card, i, 0);
+            card.setOnMouseReleased(event -> {
+                if (card.isVisible()) {
+                    background.setStyle("-fx-background-color: #000; -fx-background-radius: 8%; -fx-background-insets: 1px 1px 1px 1px; -fx-padding: 1px 1px 1px 1px;");
+                    gameClient.cardPlayed(card.getCard());
+                }
+            });
+            background.getChildren().add(card);
+            cardPane.add(background, i, 0);
             handView.add(card);
+            handViewBackgrounds.add(background);
         }
 
-        mainPane.getRowConstraints().get(2).maxHeightProperty().bind(handView.get(0).fitHeightProperty());
-        mainPane.getRowConstraints().get(2).prefHeightProperty().bind(handView.get(0).fitHeightProperty());
+        for (int i = 1; i < 1 + trickSize; i++) {
+            CardView card = new CardView();
+            card.setPreserveRatio(true);
+            card.setSmooth(true);
+            card.fitWidthProperty().bind(gridSize.widthProperty());
+            playedCardsPane.add(card, i, 0);
+            trickView.add(card);
+        }
 
-        List<Card> newhand = new ArrayList<>();
-        newhand.add(new Card("d1"));
-        newhand.add(new Card("d13"));
-        newhand.add(new Card("s11"));
-        newhand.add(new Card("c12"));
-        newhand.add(new Card("j0"));
-        newhand.add(new Card("h6"));
 
-        updateHand(newhand);
+        int port = 1236;
+        Main.createServer(port, () -> System.out.println("failed to host"), () -> serverUp = true);
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            Main.killThreads();
+            System.exit(1);
+        }
+        System.out.println("hosted");
+        gameClient = Main.joinGame("127.0.0.1", port, () -> System.out.println("failed to connect to host"), () -> gameJoined = true, this);
+        while (!gameJoined && !serverUp) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Main.killThreads();
+                System.exit(1);
+            }
+        }
+        System.out.println("connected");
+
+        //cardPane.prefHeightProperty().bind(handViewBackgrounds.get(0).heightProperty());
+
     }
 }
