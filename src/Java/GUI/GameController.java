@@ -1,33 +1,44 @@
 package Java.GUI;
 
 import Java.Logic.Card;
-import Java.Logic.GameClient;
 import Java.Logic.Main;
+import Java.Logic.Player;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ResourceBundle;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.geometry.HPos;
 import javafx.geometry.Pos;
+import javafx.geometry.VPos;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
-import java.net.URL;
-import java.util.*;
 
 public class GameController implements Initializable {
     @FXML
-    private GridPane cardPane, playedCardsPane, mainPane;
+    private GridPane cardPane, playedCardsPane;
     @FXML
     private Pane gridSize;
     @FXML
-    private Label roundInfoLabel;
+    private Label roundInfoLabel, turnLabel, trickResultLabel;
     @FXML
-    private ListView roundOrderList;
+    private ListView<String> roundOrderList;
+    @FXML
+    private Button endTrickButton;
 
     private Map<Card, Image> cardImages = new HashMap<>();
 
     private List<CardView> trickView = new ArrayList<>();
+    private List<Label> trickLabels = new ArrayList<>();
     private List<CardView> handView = new ArrayList<>();
     private List<Pane> handViewBackgrounds = new ArrayList<>();
 
@@ -49,18 +60,91 @@ public class GameController implements Initializable {
         }
     }
 
-    public void updateTrick(List<Card> trick) {
-        if (trick.size() > trickSize) {
-            System.err.println(String.format("Trick size larger than %d (%d).", trickSize, trick.size()));
-            return;
-        }
-        for (int i = 0; i < trick.size(); i++) {
-            trickView.get(i).setCard(trick.get(i), cardImages.get(trick.get(i)));
-            trickView.get(i).setVisible(true);
-        }
-        for (int i = trick.size(); i < 4; i++) {
-            trickView.get(i).setVisible(false);
-        }
+    public void updateTrick(List<Card> trick, List<Player> trickPlayers) {
+        Platform.runLater(() -> {
+            if (trick.size() > trickSize) {
+                System.err.println(String.format("Trick size larger than %d (%d).", trickSize, trick.size()));
+                return;
+            }
+            for (int i = 0; i < trick.size(); i++) {
+                trickView.get(i).setCard(trick.get(i), cardImages.get(trick.get(i)));
+                trickView.get(i).setVisible(true);
+                trickLabels.get(i).setText(trickPlayers.get(i).getName());
+                trickLabels.get(i).setVisible(true);
+            }
+            for (int i = trick.size(); i < 4; i++) {
+                trickView.get(i).setVisible(false);
+                trickLabels.get(i).setVisible(false);
+            }
+        });
+    }
+
+    public void updateRoundInfo(List<Player> players, int selfIndex, List<Integer> tricksWon, int trickNum) {
+        Platform.runLater(() -> {
+            roundInfoLabel.setText(String.format(
+                "You are playing as %s\n"
+                    + "Round 1, Trick %d\n\n"
+                    + "%s & %s: %d tricks won, %dpts\n"
+                    + "%s & %s: %d tricks won, %dpts", players.get(selfIndex).getName(), trickNum,
+                players.get(0).getName(), players.get(2).getName(), tricksWon.get(0), players.get(0).points,
+                players.get(1).getName(), players.get(3).getName(), tricksWon.get(1), players.get(1).points));
+        });
+    }
+
+    public void setPlayerTurn(List<Player> players, boolean isPlaying, int index) {
+        Platform.runLater(() -> {
+            roundOrderList.getItems().clear();
+            for (int i = 0; i < players.size(); i++) {
+                if (i == index) {
+                    roundOrderList.getItems().add(players.get(i).getName() + " (playing)");
+                } else {
+                    roundOrderList.getItems().add(players.get(i).getName());
+                }
+            }
+            if (isPlaying) {
+                turnLabel.setText("Your turn");
+                for (CardView cardView: handView) {
+                    cardView.setOpacity(0.9);
+                }
+            } else {
+                turnLabel.setText(players.get(index).getName() + "'s turn");
+                for (CardView cardView: handView) {
+                    cardView.setOpacity(0.6);
+                }
+            }
+            turnLabel.setVisible(true);
+        });
+    }
+
+    public void setPlayerList(List<Player> players) {
+        Platform.runLater(() -> {
+            roundOrderList.getItems().clear();
+            for (Player player: players) {
+                roundOrderList.getItems().add(player.getName());
+            }
+        });
+    }
+
+    public void setRoundInfoLabelText(String text) {
+        Platform.runLater(() -> roundInfoLabel.setText(text));
+    }
+
+    public void setTrickResults(Player winner) {
+        Platform.runLater(() -> {
+            for (CardView cardView: handView) {
+                cardView.setOpacity(0.6);
+            }
+            trickResultLabel.setText(winner.getName() + " won the trick.");
+            trickResultLabel.setVisible(true);
+            endTrickButton.setVisible(true);
+        });
+    }
+
+    public void endTrick() {
+        trickResultLabel.setVisible(false);
+        endTrickButton.setVisible(false);
+        Main.gameClient.readyForNextTrick();
+        turnLabel.setText("Waiting for other players to continue...");
     }
 
     @Override
@@ -112,8 +196,14 @@ public class GameController implements Initializable {
             card.setPreserveRatio(true);
             card.setSmooth(true);
             card.fitWidthProperty().bind(gridSize.widthProperty());
-            playedCardsPane.add(card, i, 0);
+            playedCardsPane.add(card, i, 1);
+            Label label = new Label();
+            GridPane.setHalignment(label, HPos.CENTER);
+            GridPane.setValignment(label, VPos.BOTTOM);
+            label.setStyle("-fx-font-size: 14px; -fx-text-fill: #dae7f1");
+            playedCardsPane.add(label, i, 0);
             trickView.add(card);
+            trickLabels.add(label);
         }
     }
 }

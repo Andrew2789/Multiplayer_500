@@ -1,5 +1,6 @@
 package Java.Logic;
 
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.*;
 import java.util.ArrayList;
@@ -7,13 +8,13 @@ import java.util.List;
 
 public abstract class SocketThread extends Thread {
 	private Thread t;
-    private Runnable onFail, onSuccess, onDisconnect;
+    private Runnable onFail, onSuccess, onDisconnect, onServerCreation;
 	private ServerSocket serverSocket = null;
     protected List<ClientSocket> clientSockets = new ArrayList<>();
-	protected static final int checkTimeout = 100;
+	protected static final int checkTimeout = 100, communicationTimeout = 10000;
 	protected boolean exit = false, stopWaiting = false, ownsSocket = true;
 	protected String ipAddress = null;
-	protected int port, connectTimeout, connections = 1;
+	protected int port, connections = 1;
 
     /**
      * Construct a new SocketThread as a client. The client will not attempt to connect to the specified server until the thread is started.
@@ -27,7 +28,6 @@ public abstract class SocketThread extends Thread {
 	public SocketThread(String ipAddress, int port, Runnable onFail, Runnable onSuccess, Runnable onDisconnect) {
 		this.ipAddress = ipAddress;
 		this.port = port;
-		this.connectTimeout = 10000; //10 seconds
         this.onFail = onFail;
         this.onSuccess = onSuccess;
         this.onDisconnect = onDisconnect;
@@ -42,11 +42,12 @@ public abstract class SocketThread extends Thread {
      * @param onSuccess A runnable to run if a connection is successfully established with the server.
      * @param onDisconnect A runnable to run when the socket connection is closed for whatever reason after previously being connected.
      */
-	public SocketThread(int port, int connections, Runnable onFail, Runnable onSuccess, Runnable onDisconnect) {
+	public SocketThread(int port, int connections, Runnable onFail, Runnable onSuccess, Runnable onServerCreation, Runnable onDisconnect) {
 		this.port = port;
 		this.connections = connections;
         this.onFail = onFail;
         this.onSuccess = onSuccess;
+        this.onServerCreation = onServerCreation;
         this.onDisconnect = onDisconnect;
 	}
 
@@ -72,12 +73,26 @@ public abstract class SocketThread extends Thread {
 		return clientSockets.size() == connections;
 	}
 
+	protected void acceptConnection() throws IOException {
+		stopWaiting = false;
+		while (!exit && !stopWaiting) {
+			try {
+				Socket socket = serverSocket.accept();
+				socket.setSoTimeout(checkTimeout);
+				clientSockets.add(new ClientSocket(socket));
+				connections = clientSockets.size();
+				return;
+			} catch (SocketTimeoutException e) {
+			}
+		}
+	}
+
 	private boolean initializeSockets() throws IOException {
 		if (ipAddress != null) {
 			//If there is an ip address specified, this must be a client
 			try {
 				Socket socket = new Socket();
-				socket.connect(new InetSocketAddress(InetAddress.getByName(ipAddress), port), connectTimeout);
+				socket.connect(new InetSocketAddress(InetAddress.getByName(ipAddress), port), communicationTimeout);
 				socket.setSoTimeout(checkTimeout);
 				clientSockets.add(new ClientSocket(socket));
 			} catch (IOException e) {
@@ -89,6 +104,7 @@ public abstract class SocketThread extends Thread {
 			try {
 				serverSocket = new ServerSocket(port);
 				serverSocket.setSoTimeout(checkTimeout);
+                onServerCreation.run();
 			} catch (IOException e) {
 				serverSocket = null;
 				onFail.run();
@@ -97,17 +113,11 @@ public abstract class SocketThread extends Thread {
 
 			if (serverSocket != null) {
 				while (!exit && !stopWaiting && clientSockets.size() < connections) {
-					try {
-						Socket socket = serverSocket.accept();
-						socket.setSoTimeout(checkTimeout);
-						clientSockets.add(new ClientSocket(socket));
-					} catch (SocketTimeoutException e) {
-					}
+					acceptConnection();
 				}
 				if (exit) {
 					return false;
 				}
-				connections = clientSockets.size();
 			}
 		}
 		return true;
@@ -150,5 +160,38 @@ public abstract class SocketThread extends Thread {
 			t = new Thread(this);
 			t.start();
 		}
+	}
+
+	protected String receiveString(DataInputStream in) throws IOException {
+		String out = null;
+		while (out == null && !exit) {
+			try {
+				out = in.readUTF();
+			} catch (SocketTimeoutException e) {
+			}
+		}
+		return out;
+	}
+
+	protected int receiveInt(DataInputStream in) throws IOException {
+		Integer out = null;
+		while (out == null && !exit) {
+			try {
+				out = in.readInt();
+			} catch (SocketTimeoutException e) {
+			}
+		}
+		return out;
+	}
+
+	protected boolean receiveBool(DataInputStream in) throws IOException {
+		Boolean out = null;
+		while (out == null && !exit) {
+			try {
+				out = in.readBoolean();
+			} catch (SocketTimeoutException e) {
+			}
+		}
+		return out;
 	}
 }

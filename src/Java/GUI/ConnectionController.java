@@ -7,56 +7,37 @@ import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 
 public class ConnectionController implements Initializable {
     @FXML
-    private TextField ipInput, clientPortInput, hostPortInput;
+    private TextField ipInput, clientPortInput, hostPortInput, nameInput;
     @FXML
     private Button connectButton, hostButton;
-
-    private boolean connected = false;
+    @FXML
+    private CheckBox hostIsPlayer;
 
     private static final int PORT_MIN = 1024;
+
 
     public void connectClicked() {
         String ipAddress = ipInput.getCharacters().toString();
         int port = Integer.parseInt(clientPortInput.getCharacters().toString());
 
-        connected = false;
-        Main.joinGame(ipAddress, port, () -> System.out.println("failed to connect to host"),() -> connected = true);
-        try {
-            while (!connected) {
-                Thread.sleep(100);
-            }
-        } catch (InterruptedException e) {
-            Main.killThreads();
-            System.exit(1);
-        }
+        Main.joinGame(nameInput.getCharacters().toString(), ipAddress, port, () -> System.out.println("failed to connect to host"));
         Main.showGame();
     }
 
     public void hostClicked() {
         int port = Integer.parseInt(hostPortInput.getCharacters().toString());
         Main.createServer(port, () -> System.out.println("failed to host"), () -> System.out.println("server up"));
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            Main.killThreads();
-            System.exit(1);
+
+        if (hostIsPlayer.isSelected()) {
+            Main.joinGame(nameInput.getCharacters().toString(), "127.0.0.1", port, () -> System.out.println("failed to connect to host"));
         }
-        connected = false;
-        Main.joinGame("127.0.0.1", port, () -> System.out.println("failed to connect to host"),() -> connected = true);
-        try {
-            while (!connected) {
-                Thread.sleep(100);
-            }
-        } catch (InterruptedException e) {
-            Main.killThreads();
-            System.exit(1);
-        }
-        Main.showGame();
+        Main.showGameSetup();
     }
 
     private boolean updatePortField(String newValue) {
@@ -74,6 +55,9 @@ public class ConnectionController implements Initializable {
     }
 
     private boolean clientConnectReady() {
+        if (nameInput.getCharacters().toString().isEmpty()) {
+            return false;
+        }
         String ipAddress = ipInput.getCharacters().toString();
         String port = clientPortInput.getCharacters().toString();
         if (ipAddress.isEmpty() || port.isEmpty())
@@ -87,6 +71,9 @@ public class ConnectionController implements Initializable {
     }
 
     private boolean hostListenReady() {
+        if (nameInput.getCharacters().toString().isEmpty()) {
+            return false;
+        }
         try {
             return Integer.parseInt(hostPortInput.getCharacters().toString()) >= PORT_MIN;
         } catch (NumberFormatException e) {
@@ -94,6 +81,7 @@ public class ConnectionController implements Initializable {
         }
     }
 
+    @Override
     public void initialize(URL location, ResourceBundle resources) {
         ipInput.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER) {
@@ -161,5 +149,10 @@ public class ConnectionController implements Initializable {
             }
             hostButton.setDisable(!hostListenReady());
         });
+
+        nameInput.textProperty().addListener(((observable, oldValue, newValue) -> {
+            connectButton.setDisable(!clientConnectReady());
+            hostButton.setDisable(!hostListenReady());
+        }));
     }
 }

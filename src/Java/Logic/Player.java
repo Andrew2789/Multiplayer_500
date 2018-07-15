@@ -6,6 +6,7 @@ import java.util.List;
 public class Player {
     private String name;
     public List<Card> hand;
+    public int points;
 
     public Player(String name) {
         this.name = name;
@@ -18,6 +19,10 @@ public class Player {
     }
 
     public String getName() {
+        return name;
+    }
+
+    public String toString() {
         return name;
     }
 }

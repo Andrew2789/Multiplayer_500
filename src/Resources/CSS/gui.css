@@ -111,6 +111,9 @@
 	-fx-background-color: #1d3549;
 }
 
+.list-view {
+	-fx-background-color: #396a93;
+}
 
 .list-view:focused {
     -fx-background-color: #396a93, #396a93;
@@ -131,13 +134,12 @@
     -fx-text-fill: #edf3f8;
 }
 
-
-
 .list-view .list-cell,
 .tree-view .tree-cell,
 .table-row-cell,
 .tree-table-row-cell {
-    -fx-background-color: #396a93;
+	-fx-background-color: #396a93;
+	-fx-font-size: 14px
 }
 
 .list-view .list-cell:selected,
