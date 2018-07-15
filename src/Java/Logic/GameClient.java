@@ -20,6 +20,7 @@ public class GameClient extends SocketThread {
     private List<Player> players;
     private int trickNumber;
     private List<Card> trick;
+    private Bid bid;
 
     public GameClient(String name, String ipAddress, int port, Runnable onFail, Runnable onSuccess, Runnable onDisconnect, GameController gameController) {
         super(ipAddress, port, onFail, onSuccess, onDisconnect);
@@ -65,6 +66,10 @@ public class GameClient extends SocketThread {
         readyForNextTrick = true;
     }
 
+    private void bid(DataInputStream in, DataOutputStream out) throws IOException, InterruptedException {
+        bid = new Bid(receiveString(in));
+    }
+
     private void playRound(DataInputStream in, DataOutputStream out) throws IOException, InterruptedException {
         List<Integer> tricksWon = new ArrayList<>(Arrays.asList(0, 0));
         trickNumber = 1;
@@ -95,8 +100,9 @@ public class GameClient extends SocketThread {
     private int playTrick(DataInputStream in, DataOutputStream out) throws IOException, InterruptedException {
         List<Player> trickPlayers = new ArrayList<>();
         int playerTurn = receiveInt(in);
+        Character leadingSuit = null;
         while (playerTurn != -1) {
-            gameController.setPlayerTurn(players, playerTurn == playerIndex, playerTurn);
+            gameController.setPlayerTurn(players, bid.filterPlayable(players.get(playerTurn).hand, leadingSuit), playerTurn);
             if (playerTurn == playerIndex) {
                 playing = true;
                 while (playing) {
@@ -106,6 +112,9 @@ public class GameClient extends SocketThread {
             }
 
             Card played = new Card(receiveString(in));
+            if (leadingSuit == null) {
+                leadingSuit = played.getSuit();
+            }
             trick.add(played);
             trickPlayers.add(players.get(playerTurn));
             gameController.updateTrick(trick, trickPlayers);
@@ -116,6 +125,7 @@ public class GameClient extends SocketThread {
         }
         Player winner = players.get(receiveInt(in));
         gameController.setTrickResults(winner);
+        gameController.setPlayerTurn(players, null, -1);
 
         return (players.indexOf(winner) % 2);
     }
@@ -127,7 +137,6 @@ public class GameClient extends SocketThread {
         DataOutputStream out = clientSockets.get(0).out;
 
         out.writeUTF(name);
-        Thread.sleep(250);
         receiveBool(in);
         gameController.setRoundInfoLabelText("Waiting the host to choose teams...");
         playerIndex = receiveInt(in);
@@ -141,6 +150,10 @@ public class GameClient extends SocketThread {
 
         initializeGame(in);
         while (initializeRound(in)) {
+            bid(in, out);
+            if (exit) {
+                return;
+            }
             playRound(in, out);
             if (exit) {
                 return;

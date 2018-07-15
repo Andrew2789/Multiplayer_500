@@ -1,16 +1,27 @@
 package Java.Logic;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Bid {
     private int tricks;
-    private char suit;
+    private char trumpSuit;
 
-    public Bid(int tricks, char suit) {
+    public Bid(int tricks, char trumpSuit) {
         this.tricks = tricks;
-        this.suit = suit;
+        this.trumpSuit = trumpSuit;
+    }
+
+    public Bid(String bid) {
+        if (bid == null || bid.length() < 2) {
+            throw new IllegalArgumentException();
+        }
+        this.trumpSuit = bid.charAt(0);
+        this.tricks = Integer.parseInt(bid.substring(1));
     }
 
     public int getPoints() {
-        switch (suit) {
+        switch (trumpSuit) {
             case 's':
                 return 40 + 100*(tricks - 6);
             case 'c':
@@ -21,14 +32,14 @@ public class Bid {
                 return 100 + 100*(tricks - 6);
             case 'n':
                 return 120 + 100*(tricks - 6);
-            case 'm': //miseer, tricks 0 = normal miseer, tricks 1 = open miseer
+            case 'm': //misere, tricks 0 = normal misere, tricks 1 = open misere
                 if (tricks == 0) {
                     return 250;
                 } else {
                     return 400;
                 }
                 default:
-                    throw new IllegalStateException("This bid has an invalid suit or trick number");
+                    throw new IllegalStateException("This bid has an invalid trumpSuit or trick number");
         }
     }
 
@@ -39,24 +50,66 @@ public class Bid {
         int value = card.getVal();
         if (value == 1) { //Ace value is adjusted to 14, 1 higher than king
             value = 14;
-        } else if (value == 11 && (suit != 'n' && suit != 'm')) { //Check for bowers
-            if (suit == card.getSuit()) {
+        } else if (card.getVal() == 11 && (trumpSuit != 'n' && trumpSuit != 'm')) { //Check for bowers
+            if (trumpSuit == card.getSuit()) {
                 value = 16; //right bower
-            } else if (suit == 's' && card.getSuit() == 'c' ||
-                suit == 'c' && card.getSuit() == 's' ||
-                suit == 'd' && card.getSuit() == 'h' ||
-                suit == 'h' && card.getSuit() == 'd') {
-                value = 35; //value = 15 for left bower, +20 for being trump suit
+            } else if (isLeftBower(card)) {
+                value = 35; //value = 15 for left bower, +20 for being trump trumpSuit
             }
         }
 
-        if (card.getSuit() != suit && card.getSuit() != leadingSuit && value < 20) {
+        if (card.getSuit() != trumpSuit && card.getSuit() != leadingSuit && value < 20) {
             return 0;
         }
 
-        if (card.getSuit() == suit) { //Card is trump suit
+        if (card.getSuit() == trumpSuit) { //Card is trump trumpSuit
             value += 20;
         }
         return value;
+    }
+
+    public List<Card> filterPlayable(List<Card> cards, Character leadingSuit) {
+        List<Card> playableCards = new ArrayList<>();
+        if (leadingSuit == null) {
+            playableCards.addAll(cards);
+            return playableCards;
+        }
+        for (Card card: cards) {
+            char cardSuit = card.getSuit();
+            if (isLeftBower(card) || cardSuit == 'j') {
+                cardSuit = trumpSuit;
+            }
+            if (cardSuit == 'n' || cardSuit == 'm') { //if a joker in a no trumps or misere bid
+                playableCards.add(card);
+            } else if (cardSuit == leadingSuit) {
+                playableCards.add(card);
+            }
+        }
+
+        if (playableCards.size() == 0) {
+            playableCards.addAll(cards);
+        }
+        return playableCards;
+    }
+
+    private boolean isLeftBower(Card card) {
+        return card.getVal() == 11 && (
+            trumpSuit == 's' && card.getSuit() == 'c' ||
+            trumpSuit == 'c' && card.getSuit() == 's' ||
+            trumpSuit == 'd' && card.getSuit() == 'h' ||
+            trumpSuit == 'h' && card.getSuit() == 'd');
+    }
+
+    public boolean hasLeadingSuit(List<Card> cards, char leadingSuit) {
+        for (Card card : cards) {
+            if (card.getSuit() == leadingSuit) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public String toString() {
+        return Character.toString(trumpSuit) + tricks;
     }
 }

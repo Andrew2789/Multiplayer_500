@@ -1,5 +1,6 @@
 package Java.GUI;
 
+import Java.Logic.Bid;
 import Java.Logic.Card;
 import Java.Logic.Main;
 import Java.Logic.Player;
@@ -91,7 +92,7 @@ public class GameController implements Initializable {
         });
     }
 
-    public void setPlayerTurn(List<Player> players, boolean isPlaying, int index) {
+    public void setPlayerTurn(List<Player> players, List<Card> playableCards, int index) {
         Platform.runLater(() -> {
             roundOrderList.getItems().clear();
             for (int i = 0; i < players.size(); i++) {
@@ -101,13 +102,21 @@ public class GameController implements Initializable {
                     roundOrderList.getItems().add(players.get(i).getName());
                 }
             }
-            if (isPlaying) {
+            if (playableCards != null) {
                 turnLabel.setText("Your turn");
-                for (CardView cardView: handView) {
-                    cardView.setOpacity(0.9);
+                for (CardView cardView : handView) {
+                    cardView.setOpacity(0.6);
+                    for (Card card: playableCards) {
+                        if (cardView.getCard().equals(card)) {
+                            cardView.setOpacity(0.9);
+                            break;
+                        }
+                    }
                 }
             } else {
-                turnLabel.setText(players.get(index).getName() + "'s turn");
+                if (index != -1) {
+                    turnLabel.setText(players.get(index).getName() + "'s turn");
+                }
                 for (CardView cardView: handView) {
                     cardView.setOpacity(0.6);
                 }
@@ -174,13 +183,13 @@ public class GameController implements Initializable {
             card.fitWidthProperty().bind(gridSize.widthProperty());
             StackPane.setAlignment(card, Pos.CENTER);
             card.setOnMousePressed(event -> {
-                if (card.isVisible()) {
+                if (card.isVisible() && card.getOpacity() > 0.8) {
                     background.setStyle("-fx-background-color: #4785b8; -fx-background-radius: 8%; -fx-background-insets: 1px 1px 1px 1px; -fx-padding: 1px 1px 1px 1px;");
                     //client.cardPlayed(hand.get(index));
                 }
             });
             card.setOnMouseReleased(event -> {
-                if (card.isVisible()) {
+                if (card.isVisible() && card.getOpacity() > 0.8) {
                     background.setStyle("-fx-background-color: #000; -fx-background-radius: 8%; -fx-background-insets: 1px 1px 1px 1px; -fx-padding: 1px 1px 1px 1px;");
                     Main.gameClient.cardPlayed(card.getCard());
                 }

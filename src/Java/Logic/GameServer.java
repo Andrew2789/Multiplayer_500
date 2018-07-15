@@ -101,6 +101,9 @@ public class GameServer extends SocketThread {
         }
 
         game.bid = new Bid(8, 'd');
+        for (ClientSocket clientSocket: clientSockets) {
+            clientSocket.out.writeUTF(game.bid.toString());
+        }
 
         for (int i = 0; i < 10; i++) {
             playTrick();
