@@ -1,7 +1,7 @@
-package Java.Logic;
+package java.logic;
 
-import Java.GUI.GameController;
-import Java.GUI.GameSetupController;
+import java.gui.GameController;
+import java.gui.GameSetupController;
 import java.io.IOException;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -105,7 +105,7 @@ public class Main extends Application {
         System.setOut(new PrintStream(new BufferedOutputStream(new FileOutputStream("stdout.log")), true));*/
         Main.stage = stage;
         stage.setTitle("Multiplayer 500");
-        stage.getIcons().add(new Image(getClass().getResourceAsStream("/Resources/Images/club.png")));
+        stage.getIcons().add(new Image(getClass().getResourceAsStream("/resources/images/club.png")));
         stage.setX(200);
         stage.setY(150);
         ChangeListener<Number> aspectRatioLimiter = (observable, oldValue, newValue) -> {
@@ -118,9 +118,9 @@ public class Main extends Application {
         stage.heightProperty().addListener(aspectRatioLimiter);
 
         try {
-            login = new Scene(FXMLLoader.load(getClass().getResource("/Resources/FXML/connection.fxml")), 500, 200);
-            gameSetup = new Scene(FXMLLoader.load(getClass().getResource("/Resources/FXML/gameSetup.fxml")), 600, 400);
-            game = new Scene(FXMLLoader.load(getClass().getResource("/Resources/FXML/game.fxml")), 1366, 768);
+            login = new Scene(FXMLLoader.load(getClass().getResource("/resources/fxml/connection.fxml")), 500, 200);
+            gameSetup = new Scene(FXMLLoader.load(getClass().getResource("/resources/fxml/gameSetup.fxml")), 600, 400);
+            game = new Scene(FXMLLoader.load(getClass().getResource("/resources/fxml/game.fxml")), 1366, 768);
             showLogin();
 			stage.show();
 		} catch (IOException e) {
@@ -131,7 +131,7 @@ public class Main extends Application {
 
     @Override
     public void stop() {
-    	System.out.println("Exiting GUI, killing threads");
+    	System.out.println("Exiting gui, killing threads");
         killThreads();
         Platform.exit();
     }

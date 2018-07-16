@@ -1,6 +1,6 @@
-package Java.GUI;
+package java.gui;
 
-import Java.Logic.Main;
+import java.logic.Main;
 import java.net.URL;
 import java.util.ResourceBundle;
 import javafx.beans.property.StringProperty;

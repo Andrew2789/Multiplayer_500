@@ -1,7 +1,7 @@
-package Java.GUI;
+package java.gui;
 
-import Java.Logic.Main;
-import Java.Logic.Player;
+import java.logic.Main;
+import java.logic.Player;
 import java.net.URL;
 import java.util.ResourceBundle;
 import javafx.application.Platform;
