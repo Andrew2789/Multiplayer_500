@@ -1,4 +1,4 @@
-package Java.Logic;
+package code.logic;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -19,26 +19,32 @@ public class GameServer extends SocketThread {
     }
 
     public void setTeams(List<Player> team1, List<Player> team2) {
+        //Reorder sockets
         List<ClientSocket> newClientSockets = new ArrayList<>();
-        List<Player> newPlayers = new ArrayList<>();
         for (int i = 0; i < 2; i++) {
-            newPlayers.add(team1.get(i));
-            newPlayers.add(team2.get(i));
+            newClientSockets.add(clientSockets.get(game.getPlayers().indexOf(team1.get(i))));
+            newClientSockets.add(clientSockets.get(game.getPlayers().indexOf(team2.get(i))));
         }
-        for (int i = 0; i < 4; i++) {
-            int oldIndex = game.players.indexOf(newPlayers.get(i));
-            newClientSockets.add(clientSockets.get(oldIndex));
-        }
-        game.players = newPlayers;
         clientSockets = newClientSockets;
+
+        //Reorder players
+        List<Integer> teams = new ArrayList<>();
+        for (Player player: game.getPlayers()) {
+            if (team1.contains(player)) {
+                teams.add(1);
+            } else {
+                teams.add(2);
+            }
+        }
+        game.setTeams(teams);
         teamsSet = true;
     }
 
     @Override
     void afterConnection() throws IOException, InterruptedException {
         System.out.println("Server started");
-        game = new Game();
-        while (game.players.size() < 4) {
+        List<Player> players = new ArrayList<>();
+        while (players.size() < 4) {
             acceptConnection();
             if (exit) {
                 return;
@@ -47,7 +53,7 @@ public class GameServer extends SocketThread {
             //Ensure name is not duplicate
             String name = receiveString(clientSockets.get(connections - 1).in);
             boolean duplicateFound = false;
-            for (Player player : game.players) {
+            for (Player player : players) {
                 if (player.getName().equals(name)) {
                     duplicateFound = true;
                     name += " ";
@@ -57,25 +63,26 @@ public class GameServer extends SocketThread {
             while (duplicateFound) {
                 duplicateFound = false;
                 name += "I";
-                for (Player player : game.players) {
+                for (Player player : players) {
                     if (player.getName().equals(name)) {
                         duplicateFound = true;
                         break;
                     }
                 }
             }
-            game.players.add(new Player(name));
-            Main.gameSetupController.addPlayer(game.players.get(game.players.size() - 1));
+            players.add(new Player(name));
+            Main.gameSetupController.addPlayer(players.get(players.size() - 1));
         }
 
         for (ClientSocket clientSocket: clientSockets) {
             //Notify players that the host is choosing teams
             clientSocket.out.writeBoolean(true);
         }
+        game = new Game(players);
 
         //Wait for the user to select teams
         while (!teamsSet) {
-            Thread.sleep(100);
+            sleep(100);
             if (exit) {
                 return;
             }
@@ -85,7 +92,7 @@ public class GameServer extends SocketThread {
         for (int i = 0; i < clientSockets.size(); i++) {
             clientSockets.get(i).out.writeInt(i);
             clientSockets.get(i).out.writeInt(clientSockets.size());
-            for (Player player: game.players) {
+            for (Player player: game.getPlayers()) {
                 clientSockets.get(i).out.writeUTF(player.getName());
             }
         }
@@ -95,28 +102,31 @@ public class GameServer extends SocketThread {
 
     private void playRound() throws IOException {
         game.deal();
-        for (int i = 0; i < game.players.size(); i++) {
+        for (int i = 0; i < game.getPlayers().size(); i++) {
             clientSockets.get(i).out.writeBoolean(true);
-            sendCardList(clientSockets.get(i).out, game.players.get(i).hand);
+            sendCardList(clientSockets.get(i).out, game.getPlayer(i).getHand());
         }
 
-        game.bid = new Bid(8, 'd');
+        game.setBid(new Bid(8, 'd'), 2);
         for (ClientSocket clientSocket: clientSockets) {
-            clientSocket.out.writeUTF(game.bid.toString());
+            clientSocket.out.writeUTF(game.getBid().toString());
         }
 
+        int winner = 0;
         for (int i = 0; i < 10; i++) {
-            playTrick();
+            if (i == 0) {
+                winner = playTrick(2);
+            } else {
+                winner = playTrick(winner);
+            }
         }
     }
 
-    private void playTrick() throws IOException {
-        int startingPlayer = 2, cardsPlayed = 0;
-        game.trick = new ArrayList<>();
-        game.trickPlayers = new ArrayList<>();
+    private int playTrick(int startingPlayer) throws IOException {
+        int cardsPlayed = 0;
         Character leadingSuit = null;
         do {
-            int currentPlayer = (startingPlayer + cardsPlayed) % game.players.size();
+            int currentPlayer = (startingPlayer + cardsPlayed) % game.getPlayers().size();
             for (ClientSocket clientSocket: clientSockets) {
                 clientSocket.out.writeInt(currentPlayer);
             }
@@ -127,12 +137,11 @@ public class GameServer extends SocketThread {
             for (ClientSocket clientSocket: clientSockets) {
                 clientSocket.out.writeUTF(played.toString());
             }
-            game.trick.add(played);
-            game.trickPlayers.add(game.players.get(currentPlayer));
+            game.cardPlayed(played, currentPlayer, true);
             cardsPlayed++;
-        } while (cardsPlayed < game.players.size());
+        } while (cardsPlayed < game.getPlayers().size());
 
-        int winnerIndex = game.players.indexOf(game.findWinner(leadingSuit));
+        int winnerIndex = game.getPlayers().indexOf(game.findTrickWinner());
         //Signal that the trick is over, and send the winner to all players
         for (ClientSocket clientSocket: clientSockets) {
             clientSocket.out.writeInt(-1);
@@ -142,8 +151,9 @@ public class GameServer extends SocketThread {
         for (ClientSocket clientSocket: clientSockets) {
             receiveBool(clientSocket.in);
         }
-    }
 
+        return winnerIndex;
+    }
 
     private void sendCardList(DataOutputStream out, List<Card> cards) throws IOException {
         out.writeInt(cards.size());

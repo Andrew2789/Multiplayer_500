@@ -1,4 +1,4 @@
-package Java.Logic;
+package code.logic;
 
 import java.io.*;
 import java.net.Socket;

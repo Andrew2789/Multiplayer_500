@@ -1,8 +1,9 @@
-package Java.GUI;
+package code.gui;
 
-import Java.Logic.Main;
+import code.logic.Main;
 import java.net.URL;
 import java.util.ResourceBundle;
+
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;

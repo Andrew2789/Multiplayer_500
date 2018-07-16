@@ -1,15 +1,15 @@
-package Java.GUI;
+package code.gui;
 
-import Java.Logic.Bid;
-import Java.Logic.Card;
-import Java.Logic.Main;
-import Java.Logic.Player;
+import code.logic.Card;
+import code.logic.Main;
+import code.logic.Player;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -87,8 +87,8 @@ public class GameController implements Initializable {
                     + "Round 1, Trick %d\n\n"
                     + "%s & %s: %d tricks won, %dpts\n"
                     + "%s & %s: %d tricks won, %dpts", players.get(selfIndex).getName(), trickNum,
-                players.get(0).getName(), players.get(2).getName(), tricksWon.get(0), players.get(0).points,
-                players.get(1).getName(), players.get(3).getName(), tricksWon.get(1), players.get(1).points));
+                players.get(0).getName(), players.get(2).getName(), tricksWon.get(0), players.get(0).getPoints(),
+                players.get(1).getName(), players.get(3).getName(), tricksWon.get(1), players.get(1).getPoints()));
         });
     }
 
@@ -165,11 +165,11 @@ public class GameController implements Initializable {
         for (char suit: suits) {
             for (int val = 1; val < 14; val++) {
                 Card card = new Card(suit, val);
-                cardImages.put(card, new Image(getClass().getResourceAsStream(String.format("/Resources/Images/Cards/%s.png", card))));
+                cardImages.put(card, new Image(getClass().getResourceAsStream(String.format("/resources/images/cards/%s.png", card))));
             }
         }
         Card joker = new Card('j', 0);
-        cardImages.put(joker, new Image(getClass().getResourceAsStream(String.format("/Resources/Images/Cards/%s.png", joker))));
+        cardImages.put(joker, new Image(getClass().getResourceAsStream(String.format("/resources/images/cards/%s.png", joker))));
 
         for (int i = 0; i < handSize; i++) {
             Pane background = new StackPane();
