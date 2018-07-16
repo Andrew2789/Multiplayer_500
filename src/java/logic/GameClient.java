@@ -1,11 +1,10 @@
-package Java.Logic;
+package java.logic;
 
-import Java.GUI.GameController;
+import java.gui.GameController;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -14,13 +13,10 @@ public class GameClient extends SocketThread {
     private GameController gameController;
     private String name;
     private Card cardPlayed = null;
-    private boolean playing = false, readyForNextTrick = false;
+    private boolean playing, readyForNextTrick;
 
     private int playerIndex;
-    private List<Player> players;
-    private int trickNumber;
-    private List<Card> trick;
-    private Bid bid;
+    private Game game;
 
     public GameClient(String name, String ipAddress, int port, Runnable onFail, Runnable onSuccess, Runnable onDisconnect, GameController gameController) {
         super(ipAddress, port, onFail, onSuccess, onDisconnect);
@@ -30,34 +26,18 @@ public class GameClient extends SocketThread {
 
     public void cardPlayed(Card card) {
         if (playing) {
-            if (players.get(playerIndex).hand.remove(card)) {
-                cardPlayed = card;
-                playing = false;
-            }
-        }
-    }
-
-    private void initializeGame(DataInputStream in) throws IOException {
-        for (Player player: players) {
-            player.points = 0;
-            player.hand = new ArrayList<>();
+            cardPlayed = card;
+            playing = false;
         }
     }
 
     private boolean initializeRound(DataInputStream in) throws IOException {
-        trickNumber = 0;
         if (!receiveBool(in)) {
             return false; //Game over
         }
 
-        for (Player player: players) {
-            player.hand = new ArrayList<>();
-            for (int i = 0; i < 10; i++) {
-                player.hand.add(null);
-            }
-        }
-        players.get(playerIndex).hand = receiveCardList(in);
-        gameController.updateHand(players.get(playerIndex).hand);
+        game.getPlayer(playerIndex).setHand(receiveCardList(in));
+        gameController.updateHand(game.getPlayer(playerIndex).getHand());
 
         return true;
     }
@@ -67,22 +47,19 @@ public class GameClient extends SocketThread {
     }
 
     private void bid(DataInputStream in, DataOutputStream out) throws IOException, InterruptedException {
-        bid = new Bid(receiveString(in));
+        game.setBid(new Bid(receiveString(in)));
     }
 
     private void playRound(DataInputStream in, DataOutputStream out) throws IOException, InterruptedException {
-        List<Integer> tricksWon = new ArrayList<>(Arrays.asList(0, 0));
-        trickNumber = 1;
+        int trickNumber = 1;
         for (int i = 0; i < 10; i++) {
             //Prepare for trick
-            trick = new ArrayList<>();
-            gameController.updateTrick(trick, new ArrayList<>());
-            gameController.updateRoundInfo(players, playerIndex, tricksWon, trickNumber);
+            gameController.updateTrick(game.getTrick(), new ArrayList<>());
+            gameController.updateRoundInfo(game.getPlayers(), playerIndex, game.getTricksWon(), trickNumber);
 
             //Play trick and display results
-            int winningTeam = playTrick(in, out);
-            tricksWon.set(winningTeam, tricksWon.get(winningTeam) + 1);
-            gameController.updateRoundInfo(players, playerIndex, tricksWon, trickNumber);
+            playTrick(in, out);
+            gameController.updateRoundInfo(game.getPlayers(), playerIndex, game.getTricksWon(), trickNumber);
 
             //Wait for player to click continue
             readyForNextTrick = false;
@@ -97,37 +74,37 @@ public class GameClient extends SocketThread {
         }
     }
 
-    private int playTrick(DataInputStream in, DataOutputStream out) throws IOException, InterruptedException {
+    private void playTrick(DataInputStream in, DataOutputStream out) throws IOException, InterruptedException {
         List<Player> trickPlayers = new ArrayList<>();
         int playerTurn = receiveInt(in);
         Character leadingSuit = null;
         while (playerTurn != -1) {
-            gameController.setPlayerTurn(players, bid.filterPlayable(players.get(playerTurn).hand, leadingSuit), playerTurn);
+            gameController.setPlayerTurn(game.getPlayers(), game.getBid().filterPlayable(game.getPlayer(playerTurn).getHand(), leadingSuit), playerTurn);
+            playing = false;
             if (playerTurn == playerIndex) {
                 playing = true;
                 while (playing) {
                     Thread.sleep(100);
                 }
                 out.writeUTF(cardPlayed.toString());
+                playing = true;
             }
 
             Card played = new Card(receiveString(in));
             if (leadingSuit == null) {
                 leadingSuit = played.getSuit();
             }
-            trick.add(played);
-            trickPlayers.add(players.get(playerTurn));
-            gameController.updateTrick(trick, trickPlayers);
+            game.cardPlayed(played, playerTurn, playing);
+            gameController.updateTrick(game.getTrick(), trickPlayers);
             if (playerTurn == playerIndex) {
-                gameController.updateHand(players.get(playerIndex).hand);
+                gameController.updateHand(game.getPlayer(playerIndex).getHand());
             }
             playerTurn = receiveInt(in);
         }
-        Player winner = players.get(receiveInt(in));
+        game.findTrickWinner();
+        Player winner = game.getPlayer(receiveInt(in));
         gameController.setTrickResults(winner);
-        gameController.setPlayerTurn(players, null, -1);
-
-        return (players.indexOf(winner) % 2);
+        gameController.setPlayerTurn(game.getPlayers(), null, -1);
     }
 
     @Override
@@ -142,13 +119,16 @@ public class GameClient extends SocketThread {
         playerIndex = receiveInt(in);
 
         int numPlayers = receiveInt(in);
-        players = new ArrayList<>();
+        List<Player> players = new ArrayList<>();
         for (int i = 0; i < numPlayers; i++) {
             players.add(new Player(receiveString(in)));
         }
         gameController.setPlayerList(players);
+        game = new Game(players);
 
-        initializeGame(in);
+        for (Player player: game.getPlayers()) {
+            player.resetPoints();
+        }
         while (initializeRound(in)) {
             bid(in, out);
             if (exit) {

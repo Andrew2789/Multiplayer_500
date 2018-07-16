@@ -1,7 +1,7 @@
-package Java.GUI;
+package java.gui;
 
-import Java.Logic.Card;
-import javafx.scene.control.Label;
+import java.logic.Card;
+
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
