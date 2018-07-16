@@ -147,6 +147,9 @@ public class GameClient extends SocketThread {
         int length = receiveInt(in);
         for (int i = 0; i < length; i++) {
             cards.add(new Card(receiveString(in)));
+            if (exit) {
+                return null;
+            }
         }
         return cards;
     }

@@ -132,7 +132,7 @@
                   </Label>
                   <BorderPane fx:id="dragGuide" style="-fx-background-color: #fff; -fx-opacity: 0.3;" visible="false" GridPane.columnIndex="1" GridPane.columnSpan="4" GridPane.rowIndex="1">
                      <center>
-                        <Label style="-fx-text-fill: #1d3549;;" text="Drag cursor here to play card" wrapText="true">
+                        <Label fx:id="dragGuideLabel" style="-fx-text-fill: #1d3549;;" text="Drag cursor here to play card" wrapText="true">
                            <font>
                               <Font size="25.0" />
                            </font>

@@ -33,7 +33,7 @@ public class GameController implements Initializable {
     @FXML
     private Pane gridSize, cardHeight;
     @FXML
-    private Label roundInfoLabel, turnLabel, trickResultLabel;
+    private Label roundInfoLabel, turnLabel, trickResultLabel, dragGuideLabel;
     @FXML
     private ListView<String> roundOrderList;
     @FXML
@@ -197,8 +197,29 @@ public class GameController implements Initializable {
                 if (beingDragged == card) {
                     dragGuide.setVisible(false);
                     mainPane.getChildren().remove(card);
-                    cardPane.add(card, 0, 0);
+                    cardPane.add(card, handView.indexOf(card), 0);
                     beingDragged = null;
+
+                    List<Card> reorderedHand = new ArrayList<>();
+                    boolean inserted = false;
+
+                    int index = 0;
+                    while (index < handView.size() && handView.get(index).isVisible()) {
+                        if (handView.get(index) != card) {
+                            if (!inserted && mouseEvent.getSceneX() - gridSize.getWidth() * 0.5 - handView.get(index).getLayoutX() <= 0) {
+                                reorderedHand.add(card.getCard());
+                                System.out.println(index);
+                                inserted = true;
+                            }
+                            reorderedHand.add(handView.get(index).getCard());
+                        }
+                        index++;
+                    }
+                    if (!inserted) {
+                        reorderedHand.add(card.getCard());
+                    }
+
+                    updateHand(reorderedHand);
                 }
                 if (card.isVisible() && card.getOpacity() > 0.9) {
                     Main.gameClient.cardPlayed(card.getCard());
