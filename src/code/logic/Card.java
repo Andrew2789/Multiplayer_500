@@ -1,4 +1,4 @@
-package java.logic;
+package code.logic;
 
 public class Card {
     private char suit;

@@ -1,12 +1,11 @@
-package java.logic;
+package code.logic;
 
-import java.gui.GameController;
+import code.gui.GameController;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class GameClient extends SocketThread {
@@ -35,9 +34,9 @@ public class GameClient extends SocketThread {
         if (!receiveBool(in)) {
             return false; //Game over
         }
-
         game.getPlayer(playerIndex).setHand(receiveCardList(in));
         gameController.updateHand(game.getPlayer(playerIndex).getHand());
+        game.hostDealt();
 
         return true;
     }
@@ -47,14 +46,14 @@ public class GameClient extends SocketThread {
     }
 
     private void bid(DataInputStream in, DataOutputStream out) throws IOException, InterruptedException {
-        game.setBid(new Bid(receiveString(in)));
+        game.setBid(new Bid(receiveString(in)), 2);
     }
 
     private void playRound(DataInputStream in, DataOutputStream out) throws IOException, InterruptedException {
         int trickNumber = 1;
         for (int i = 0; i < 10; i++) {
             //Prepare for trick
-            gameController.updateTrick(game.getTrick(), new ArrayList<>());
+            gameController.updateTrick(game.getTrick(), game.getTrickPlayers());
             gameController.updateRoundInfo(game.getPlayers(), playerIndex, game.getTricksWon(), trickNumber);
 
             //Play trick and display results
@@ -75,27 +74,22 @@ public class GameClient extends SocketThread {
     }
 
     private void playTrick(DataInputStream in, DataOutputStream out) throws IOException, InterruptedException {
-        List<Player> trickPlayers = new ArrayList<>();
         int playerTurn = receiveInt(in);
-        Character leadingSuit = null;
         while (playerTurn != -1) {
-            gameController.setPlayerTurn(game.getPlayers(), game.getBid().filterPlayable(game.getPlayer(playerTurn).getHand(), leadingSuit), playerTurn);
+            gameController.setPlayerTurn(game.getPlayers(), game.getBid().filterPlayable(game.getPlayer(playerTurn).getHand(), game.getLeadingSuit()), playerTurn);
             playing = false;
             if (playerTurn == playerIndex) {
                 playing = true;
                 while (playing) {
-                    Thread.sleep(100);
+                    sleep(100);
                 }
                 out.writeUTF(cardPlayed.toString());
                 playing = true;
             }
 
             Card played = new Card(receiveString(in));
-            if (leadingSuit == null) {
-                leadingSuit = played.getSuit();
-            }
             game.cardPlayed(played, playerTurn, playing);
-            gameController.updateTrick(game.getTrick(), trickPlayers);
+            gameController.updateTrick(game.getTrick(), game.getTrickPlayers());
             if (playerTurn == playerIndex) {
                 gameController.updateHand(game.getPlayer(playerIndex).getHand());
             }

@@ -1,8 +1,9 @@
-package java.logic;
+package code.logic;
 
-import java.gui.GameController;
-import java.gui.GameSetupController;
+import code.gui.GameController;
+import code.gui.GameSetupController;
 import java.io.IOException;
+
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;

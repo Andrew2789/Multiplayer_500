@@ -1,4 +1,4 @@
-package java.logic;
+package code.logic;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -82,7 +82,7 @@ public class GameServer extends SocketThread {
 
         //Wait for the user to select teams
         while (!teamsSet) {
-            Thread.sleep(100);
+            sleep(100);
             if (exit) {
                 return;
             }
@@ -107,18 +107,23 @@ public class GameServer extends SocketThread {
             sendCardList(clientSockets.get(i).out, game.getPlayer(i).getHand());
         }
 
-        game.setBid(new Bid(8, 'd'));
+        game.setBid(new Bid(8, 'd'), 2);
         for (ClientSocket clientSocket: clientSockets) {
             clientSocket.out.writeUTF(game.getBid().toString());
         }
 
+        int winner = 0;
         for (int i = 0; i < 10; i++) {
-            playTrick();
+            if (i == 0) {
+                winner = playTrick(2);
+            } else {
+                winner = playTrick(winner);
+            }
         }
     }
 
-    private void playTrick() throws IOException {
-        int startingPlayer = 2, cardsPlayed = 0;
+    private int playTrick(int startingPlayer) throws IOException {
+        int cardsPlayed = 0;
         Character leadingSuit = null;
         do {
             int currentPlayer = (startingPlayer + cardsPlayed) % game.getPlayers().size();
@@ -146,6 +151,8 @@ public class GameServer extends SocketThread {
         for (ClientSocket clientSocket: clientSockets) {
             receiveBool(clientSocket.in);
         }
+
+        return winnerIndex;
     }
 
     private void sendCardList(DataOutputStream out, List<Card> cards) throws IOException {

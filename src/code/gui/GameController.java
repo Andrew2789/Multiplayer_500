@@ -1,14 +1,15 @@
-package java.gui;
+package code.gui;
 
-import java.logic.Card;
-import java.logic.Main;
-import java.logic.Player;
+import code.logic.Card;
+import code.logic.Main;
+import code.logic.Player;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;

@@ -1,4 +1,4 @@
-package java.logic;
+package code.logic;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,13 +12,15 @@ public class Game {
     private List<Player> trickPlayers = new ArrayList<>();
     private List<Integer> tricksWon = new ArrayList<>();
     private Bid bid;
+    private int startingPlayer;
 
     public Game(List<Player> players) {
         this.players = players;
     }
 
-    public void setBid(Bid bid) {
+    public void setBid(Bid bid, int startingPlayer) {
         this.bid = bid;
+        this.startingPlayer = startingPlayer;
         trick.clear();
         trickPlayers.clear();
     }
@@ -47,6 +49,10 @@ public class Game {
             getPlayer(i).setHand(hand);
         }
         kitty = deck;
+        tricksWon = new ArrayList<>(Arrays.asList(0, 0));
+    }
+
+    public void hostDealt() {
         tricksWon = new ArrayList<>(Arrays.asList(0, 0));
     }
 
@@ -94,9 +100,9 @@ public class Game {
         return deck;
     }
 
-    public char getLeadingSuit() {
+    public Character getLeadingSuit() {
         if (trick.size() == 0) {
-            throw new IllegalArgumentException("No tricks have been played yet so there is no leading suit.");
+            return null;
         }
         return trick.get(0).getSuit();
     }
@@ -106,15 +112,23 @@ public class Game {
     }
 
     public List<Card> getTrick() {
-        return Collections.unmodifiableList(trick);
+        return Collections.unmodifiableList(new ArrayList<>(trick));
     }
 
     public List<Integer> getTricksWon() {
         return Collections.unmodifiableList(tricksWon);
     }
 
+    public List<Player> getTrickPlayers() {
+        return Collections.unmodifiableList(new ArrayList<>(trickPlayers));
+    }
+
     public Player getPlayer(int index) {
         return players.get(index);
+    }
+
+    public int getStartingPlayer() {
+        return startingPlayer;
     }
 
     public Bid getBid() {
