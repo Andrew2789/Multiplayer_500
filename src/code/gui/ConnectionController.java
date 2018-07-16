@@ -9,6 +9,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 
@@ -19,24 +20,36 @@ public class ConnectionController implements Initializable {
     private Button connectButton, hostButton;
     @FXML
     private CheckBox hostIsPlayer;
+    @FXML
+    private Label errorLabel;
 
     private static final int PORT_MIN = 1024;
-
 
     public void connectClicked() {
         String ipAddress = ipInput.getCharacters().toString();
         int port = Integer.parseInt(clientPortInput.getCharacters().toString());
 
-        Main.joinGame(nameInput.getCharacters().toString(), ipAddress, port, () -> System.out.println("failed to connect to host"));
-        Main.showGame();
+        if (Main.joinGame(nameInput.getCharacters().toString(), ipAddress, port)) {
+            Main.showGame();
+        } else {
+            errorLabel.setText("Error: Failed to connect");
+            errorLabel.setVisible(true);
+        }
     }
 
     public void hostClicked() {
         int port = Integer.parseInt(hostPortInput.getCharacters().toString());
-        Main.createServer(port, () -> System.out.println("failed to host"), () -> System.out.println("server up"));
+        if (!Main.createServer(port)) {
+            errorLabel.setText("Error: Failed to host");
+            errorLabel.setVisible(true);
+        }
 
         if (hostIsPlayer.isSelected()) {
-            Main.joinGame(nameInput.getCharacters().toString(), "127.0.0.1", port, () -> System.out.println("failed to connect to host"));
+            if (!Main.joinGame(nameInput.getCharacters().toString(), "127.0.0.1", port)) {
+                errorLabel.setText("Error: Hosted, but failed to connect");
+                errorLabel.setVisible(true);
+                Main.killThreads();
+            }
         }
         Main.showGameSetup();
     }

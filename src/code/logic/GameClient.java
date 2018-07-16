@@ -51,13 +51,14 @@ public class GameClient extends SocketThread {
 
     private void playRound(DataInputStream in, DataOutputStream out) throws IOException, InterruptedException {
         int trickNumber = 1;
+        boolean trumpsPlayed = false;
         for (int i = 0; i < 10; i++) {
             //Prepare for trick
             gameController.updateTrick(game.getTrick(), game.getTrickPlayers());
             gameController.updateRoundInfo(game.getPlayers(), playerIndex, game.getTricksWon(), trickNumber);
 
             //Play trick and display results
-            playTrick(in, out);
+            trumpsPlayed = playTrick(in, out, trumpsPlayed);
             gameController.updateRoundInfo(game.getPlayers(), playerIndex, game.getTricksWon(), trickNumber);
 
             //Wait for player to click continue
@@ -73,10 +74,10 @@ public class GameClient extends SocketThread {
         }
     }
 
-    private void playTrick(DataInputStream in, DataOutputStream out) throws IOException, InterruptedException {
+    private boolean playTrick(DataInputStream in, DataOutputStream out, boolean trumpsPlayed) throws IOException, InterruptedException {
         int playerTurn = receiveInt(in);
         while (playerTurn != -1) {
-            gameController.setPlayerTurn(game.getPlayers(), game.getBid().filterPlayable(game.getPlayer(playerTurn).getHand(), game.getLeadingSuit()), playerTurn);
+            gameController.setPlayerTurn(game.getPlayers(), game.getBid().filterPlayable(game.getPlayer(playerTurn).getHand(), trumpsPlayed, game.getLeadingSuit()), playerTurn);
             playing = false;
             if (playerTurn == playerIndex) {
                 playing = true;
@@ -89,6 +90,9 @@ public class GameClient extends SocketThread {
 
             Card played = new Card(receiveString(in));
             game.cardPlayed(played, playerTurn, playing);
+            if (played.getSuit() == game.getBid().getTrumpSuit()) {
+                trumpsPlayed = true;
+            }
             gameController.updateTrick(game.getTrick(), game.getTrickPlayers());
             if (playerTurn == playerIndex) {
                 gameController.updateHand(game.getPlayer(playerIndex).getHand());
@@ -99,6 +103,7 @@ public class GameClient extends SocketThread {
         Player winner = game.getPlayer(receiveInt(in));
         gameController.setTrickResults(winner);
         gameController.setPlayerTurn(game.getPlayers(), null, -1);
+        return trumpsPlayed;
     }
 
     @Override

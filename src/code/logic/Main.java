@@ -21,7 +21,11 @@ public class Main extends Application {
 
     private static GameController gameController;
     public static GameSetupController gameSetupController;
-    private static boolean connected = false;
+    private static boolean connected = false, failed = false;
+
+    public static Stage getStage() {
+        return stage;
+    }
 
     public static void setGameController(GameController gameController) {
         Main.gameController = gameController;
@@ -33,7 +37,7 @@ public class Main extends Application {
 
     private static void waitUntilConnected() {
         try {
-            while (!connected) {
+            while (!connected && !failed) {
                 Thread.sleep(100);
             }
         } catch (InterruptedException e) {
@@ -42,18 +46,22 @@ public class Main extends Application {
         }
     }
 
-    public static void createServer(int port, Runnable onFail, Runnable onSuccess) {
+    public static boolean createServer(int port) {
         connected = false;
-        gameServer = new GameServer(port, 0, onFail, onSuccess, () -> connected = true, () -> {});
+        failed = false;
+        gameServer = new GameServer(port, 0, () -> failed = true, () -> {}, () -> connected = true, () -> {});
         gameServer.start();
         waitUntilConnected();
+        return connected;
     }
 
-    public static void joinGame(String name, String ipAddress, int port, Runnable onFail) {
+    public static boolean joinGame(String name, String ipAddress, int port) {
         connected = false;
-        gameClient = new GameClient(name, ipAddress, port, onFail, () -> connected = true, () -> {}, gameController);
+        failed = false;
+        gameClient = new GameClient(name, ipAddress, port, () -> failed = true, () -> connected = true, () -> {}, gameController);
         gameClient.start();
         waitUntilConnected();
+        return connected;
     }
 
     public GameClient getGame() {
@@ -76,7 +84,7 @@ public class Main extends Application {
         stage.setMinHeight(0);
         stage.setScene(login);
         stage.setWidth(500);
-        stage.setHeight(200);
+        stage.setHeight(280);
         stage.setResizable(false);
     }
 
@@ -119,7 +127,7 @@ public class Main extends Application {
         stage.heightProperty().addListener(aspectRatioLimiter);
 
         try {
-            login = new Scene(FXMLLoader.load(getClass().getResource("/resources/fxml/connection.fxml")), 500, 200);
+            login = new Scene(FXMLLoader.load(getClass().getResource("/resources/fxml/connection.fxml")), 500, 280);
             gameSetup = new Scene(FXMLLoader.load(getClass().getResource("/resources/fxml/gameSetup.fxml")), 600, 400);
             game = new Scene(FXMLLoader.load(getClass().getResource("/resources/fxml/game.fxml")), 1366, 768);
             showLogin();

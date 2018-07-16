@@ -9,7 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
-
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -20,32 +19,37 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.image.Image;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 
 public class GameController implements Initializable {
     @FXML
+    private AnchorPane mainPane;
+    @FXML
     private GridPane cardPane, playedCardsPane;
     @FXML
-    private Pane gridSize;
+    private Pane gridSize, cardHeight;
     @FXML
     private Label roundInfoLabel, turnLabel, trickResultLabel;
     @FXML
     private ListView<String> roundOrderList;
     @FXML
     private Button endTrickButton;
+    @FXML
+    private BorderPane dragGuide;
 
     private Map<Card, Image> cardImages = new HashMap<>();
 
     private List<CardView> trickView = new ArrayList<>();
     private List<Label> trickLabels = new ArrayList<>();
     private List<CardView> handView = new ArrayList<>();
-    private List<Pane> handViewBackgrounds = new ArrayList<>();
+
+    private CardView beingDragged = null;
 
     private int trickSize = 4, handSize = 10;
-
-    private boolean serverUp = false, gameJoined = false;
 
     public void updateHand(List<Card> hand) {
         if (hand.size() > handSize) {
@@ -54,10 +58,6 @@ public class GameController implements Initializable {
         }
         for (int i = 0; i < hand.size(); i++) {
             handView.get(i).setCard(hand.get(i), cardImages.get(hand.get(i)));
-            handViewBackgrounds.get(i).setVisible(true);
-        }
-        for (int i = hand.size(); i < handSize; i++) {
-            handViewBackgrounds.get(i).setVisible(false);
         }
     }
 
@@ -105,10 +105,10 @@ public class GameController implements Initializable {
             if (playableCards != null) {
                 turnLabel.setText("Your turn");
                 for (CardView cardView : handView) {
-                    cardView.setOpacity(0.6);
+                    cardView.setOpacity(0.7);
                     for (Card card: playableCards) {
                         if (cardView.getCard().equals(card)) {
-                            cardView.setOpacity(0.9);
+                            cardView.setOpacity(1);
                             break;
                         }
                     }
@@ -118,7 +118,7 @@ public class GameController implements Initializable {
                     turnLabel.setText(players.get(index).getName() + "'s turn");
                 }
                 for (CardView cardView: handView) {
-                    cardView.setOpacity(0.6);
+                    cardView.setOpacity(0.7);
                 }
             }
             turnLabel.setVisible(true);
@@ -141,7 +141,7 @@ public class GameController implements Initializable {
     public void setTrickResults(Player winner) {
         Platform.runLater(() -> {
             for (CardView cardView: handView) {
-                cardView.setOpacity(0.6);
+                cardView.setOpacity(0.7);
             }
             trickResultLabel.setText(winner.getName() + " won the trick.");
             trickResultLabel.setVisible(true);
@@ -172,32 +172,40 @@ public class GameController implements Initializable {
         cardImages.put(joker, new Image(getClass().getResourceAsStream(String.format("/resources/images/cards/%s.png", joker))));
 
         for (int i = 0; i < handSize; i++) {
-            Pane background = new StackPane();
-            //background.setPrefHeight(0);
-            background.setStyle("-fx-background-color: #000; -fx-background-radius: 8%; -fx-background-insets: 1px 1px 1px 1px; -fx-padding: 1px 1px 1px 1px;");
-            background.setPrefHeight(0);
-
             CardView card = new CardView();
             card.setPreserveRatio(true);
             card.setSmooth(true);
             card.fitWidthProperty().bind(gridSize.widthProperty());
             StackPane.setAlignment(card, Pos.CENTER);
-            card.setOnMousePressed(event -> {
-                if (card.isVisible() && card.getOpacity() > 0.8) {
-                    background.setStyle("-fx-background-color: #4785b8; -fx-background-radius: 8%; -fx-background-insets: 1px 1px 1px 1px; -fx-padding: 1px 1px 1px 1px;");
-                    //client.cardPlayed(hand.get(index));
+            card.setOnMousePressed(mouseEvent -> {
+                if (beingDragged == null) {
+                    dragGuide.setVisible(true);
+                    beingDragged = card;
+                    cardPane.getChildren().remove(card);
+                    mainPane.getChildren().add(card);
+                    card.setX(mouseEvent.getSceneX() - gridSize.getWidth() * (0.5 + handView.indexOf(card)));
+                    card.setY(mouseEvent.getSceneY() - cardHeight.getWidth() * 0.75);
                 }
             });
-            card.setOnMouseReleased(event -> {
-                if (card.isVisible() && card.getOpacity() > 0.8) {
-                    background.setStyle("-fx-background-color: #000; -fx-background-radius: 8%; -fx-background-insets: 1px 1px 1px 1px; -fx-padding: 1px 1px 1px 1px;");
+            card.setOnMouseDragged(mouseEvent -> {
+                if (beingDragged == card) {
+                    card.setX(mouseEvent.getSceneX() - gridSize.getWidth() * (0.5 + handView.indexOf(card)));
+                    card.setY(mouseEvent.getSceneY() - cardHeight.getWidth() * 0.75);
+                }
+            });
+            card.setOnMouseReleased(mouseEvent -> {
+                if (beingDragged == card) {
+                    dragGuide.setVisible(false);
+                    mainPane.getChildren().remove(card);
+                    cardPane.add(card, 0, 0);
+                    beingDragged = null;
+                }
+                if (card.isVisible() && card.getOpacity() > 0.9) {
                     Main.gameClient.cardPlayed(card.getCard());
                 }
             });
-            background.getChildren().add(card);
-            cardPane.add(background, i, 0);
+            cardPane.add(card, i, 0);
             handView.add(card);
-            handViewBackgrounds.add(background);
         }
 
         for (int i = 1; i < 1 + trickSize; i++) {

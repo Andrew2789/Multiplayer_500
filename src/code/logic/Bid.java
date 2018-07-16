@@ -82,7 +82,7 @@ public class Bid {
             if (cardSuit == 'n' || cardSuit == 'm') { //if a joker in a no trumps or misere bid
                 playableCards.add(card);
             } else if (leadingSuit == null) {
-                if (card.getSuit() != trumpSuit) {
+                if (cardSuit != trumpSuit) {
                     playableCards.add(card);
                 }
             } else if (cardSuit == leadingSuit) {
@@ -96,12 +96,16 @@ public class Bid {
         return playableCards;
     }
 
-    private boolean isLeftBower(Card card) {
+    public boolean isLeftBower(Card card) {
         return card.getVal() == 11 && (
             trumpSuit == 's' && card.getSuit() == 'c' ||
             trumpSuit == 'c' && card.getSuit() == 's' ||
             trumpSuit == 'd' && card.getSuit() == 'h' ||
             trumpSuit == 'h' && card.getSuit() == 'd');
+    }
+
+    public char getTrumpSuit() {
+        return trumpSuit;
     }
 
     public String toString() {

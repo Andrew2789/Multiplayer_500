@@ -42,8 +42,7 @@ public class GameSetupController implements Initializable {
         movingPlayer = true;
         Player toMove = from.getItems().remove(from.getSelectionModel().getSelectedIndex());
         to.getItems().add(toMove);
-        moveToTeam1Button.setDisable(true);
-        moveToTeam2Button.setDisable(true);
+        checkSelections();
         movingPlayer = false;
         checkContinueValid();
     }

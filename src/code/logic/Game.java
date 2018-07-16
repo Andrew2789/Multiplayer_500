@@ -103,8 +103,29 @@ public class Game {
     public Character getLeadingSuit() {
         if (trick.size() == 0) {
             return null;
+        } else if (bid.isLeftBower(trick.get(0))) {
+            switch (trick.get(0).getSuit()) {
+                case 'c':
+                    return 's';
+                case 's':
+                    return 'c';
+                case 'd':
+                    return 'h';
+                case 'h':
+                    return 'd';
+                    default:
+                        throw new IllegalStateException("Found left bower but did not have a legal suit.");
+            }
+        } else if (trick.get(0).getSuit() == 'j') {
+            if (bid.getTrumpSuit() == 'm' || bid.getTrumpSuit() == 'n') {
+                //scream TODO fix this
+                return 'c';
+            } else {
+                return bid.getTrumpSuit();
+            }
+        } else {
+            return trick.get(0).getSuit();
         }
-        return trick.get(0).getSuit();
     }
 
     public List<Player> getPlayers() {
