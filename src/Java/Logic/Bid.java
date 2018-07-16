@@ -68,9 +68,9 @@ public class Bid {
         return value;
     }
 
-    public List<Card> filterPlayable(List<Card> cards, Character leadingSuit) {
+    public List<Card> filterPlayable(List<Card> cards, boolean trumpsPlayed, Character leadingSuit) {
         List<Card> playableCards = new ArrayList<>();
-        if (leadingSuit == null) {
+        if (leadingSuit == null && trumpsPlayed) {
             playableCards.addAll(cards);
             return playableCards;
         }
@@ -81,6 +81,10 @@ public class Bid {
             }
             if (cardSuit == 'n' || cardSuit == 'm') { //if a joker in a no trumps or misere bid
                 playableCards.add(card);
+            } else if (leadingSuit == null) {
+                if (card.getSuit() != trumpSuit) {
+                    playableCards.add(card);
+                }
             } else if (cardSuit == leadingSuit) {
                 playableCards.add(card);
             }
@@ -98,15 +102,6 @@ public class Bid {
             trumpSuit == 'c' && card.getSuit() == 's' ||
             trumpSuit == 'd' && card.getSuit() == 'h' ||
             trumpSuit == 'h' && card.getSuit() == 'd');
-    }
-
-    public boolean hasLeadingSuit(List<Card> cards, char leadingSuit) {
-        for (Card card : cards) {
-            if (card.getSuit() == leadingSuit) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public String toString() {
