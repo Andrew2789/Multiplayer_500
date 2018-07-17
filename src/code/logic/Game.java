@@ -12,7 +12,8 @@ public class Game {
     private List<Player> trickPlayers = new ArrayList<>();
     private List<Integer> tricksWon = new ArrayList<>();
     private Bid bid;
-    private int startingPlayer;
+    private int bidWinner, roundNumber;
+    private boolean trumpsPlayed;
 
     public Game(List<Player> players) {
         this.players = players;
@@ -20,7 +21,7 @@ public class Game {
 
     public void setBid(Bid bid, int startingPlayer) {
         this.bid = bid;
-        this.startingPlayer = startingPlayer;
+        this.bidWinner = startingPlayer;
         trick.clear();
         trickPlayers.clear();
     }
@@ -35,6 +36,7 @@ public class Game {
         newPlayers.add(players.get(teams.lastIndexOf(1)));
         newPlayers.add(players.get(teams.lastIndexOf(2)));
         players = newPlayers;
+        roundNumber = 0;
     }
 
     public void deal() {
@@ -49,11 +51,13 @@ public class Game {
             getPlayer(i).setHand(hand);
         }
         kitty = deck;
-        tricksWon = new ArrayList<>(Arrays.asList(0, 0));
+        hostDealt();
     }
 
     public void hostDealt() {
         tricksWon = new ArrayList<>(Arrays.asList(0, 0));
+        trumpsPlayed = false;
+        roundNumber++;
     }
 
     public void cardPlayed(Card card, int playerIndex, boolean playedBySelf) {
@@ -63,6 +67,9 @@ public class Game {
             trick.add(card);
         }
         trickPlayers.add(getPlayer(playerIndex));
+        if (card.getSuit() == bid.getTrumpSuit()) {
+            trumpsPlayed = true;
+        }
     }
 
     public Player findTrickWinner() {
@@ -79,8 +86,18 @@ public class Game {
         return winningPlayer;
     }
 
-    public int findRoundWinner() {
-        return 0;
+    public boolean wasBidSuccessful() {
+        boolean won = tricksWon.get(bidWinner % 2) >= bid.getTricks();
+        players.get(0).updatePoints(won, bid);
+        players.get(1).updatePoints(getTrickPoints(), bid);
+        players.get(2).updatePoints(won, bid);
+        players.get(3).updatePoints(getTrickPoints(), bid);
+
+        return won;
+    }
+
+    public int getTrickPoints() {
+        return tricksWon.get((bidWinner + 1) % 2)*10;
     }
 
     private List<Card> createDeck() {
@@ -148,8 +165,16 @@ public class Game {
         return players.get(index);
     }
 
-    public int getStartingPlayer() {
-        return startingPlayer;
+    public boolean getTrumpsPlayed() {
+        return trumpsPlayed;
+    }
+
+    public int getRoundNumber() {
+        return roundNumber;
+    }
+
+    public int getBidWinner() {
+        return bidWinner;
     }
 
     public Bid getBid() {

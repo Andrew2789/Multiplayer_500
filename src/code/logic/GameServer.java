@@ -97,7 +97,9 @@ public class GameServer extends SocketThread {
             }
         }
 
-        playRound();
+        while (true) {
+            playRound();
+        }
     }
 
     private void playRound() throws IOException {
@@ -115,10 +117,15 @@ public class GameServer extends SocketThread {
         int winner = 0;
         for (int i = 0; i < 10; i++) {
             if (i == 0) {
-                winner = playTrick(2);
+                winner = playTrick(game.getBidWinner());
             } else {
                 winner = playTrick(winner);
             }
+        }
+        game.wasBidSuccessful();
+        //Wait for all players to click continue
+        for (ClientSocket clientSocket: clientSockets) {
+            receiveBool(clientSocket.in);
         }
     }
 

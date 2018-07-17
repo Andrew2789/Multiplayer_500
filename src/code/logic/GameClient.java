@@ -12,7 +12,7 @@ public class GameClient extends SocketThread {
     private GameController gameController;
     private String name;
     private Card cardPlayed = null;
-    private boolean playing, readyForNextTrick;
+    private boolean playing, readyToContinue;
 
     private int playerIndex;
     private Game game;
@@ -32,7 +32,11 @@ public class GameClient extends SocketThread {
 
     public void moveCard(int oldIndex, int newIndex) {
         game.getPlayer(playerIndex).moveCard(oldIndex, newIndex);
-        gameController.updateHand(game.getPlayer(playerIndex).getHand());
+        if (playing) {
+            gameController.updateHand(game.getPlayer(playerIndex).getHand(), game.getBid().filterPlayable(game.getPlayer(playerIndex).getHand(), game.getTrumpsPlayed(), game.getLeadingSuit()));
+        } else {
+            gameController.updateHand(game.getPlayer(playerIndex).getHand(), null);
+        }
     }
 
     private boolean initializeRound(DataInputStream in) throws IOException {
@@ -40,14 +44,14 @@ public class GameClient extends SocketThread {
             return false; //Game over
         }
         game.getPlayer(playerIndex).setHand(receiveCardList(in));
-        gameController.updateHand(game.getPlayer(playerIndex).getHand());
+        gameController.updateHand(game.getPlayer(playerIndex).getHand(), null);
         game.hostDealt();
 
         return true;
     }
 
-    public void readyForNextTrick() {
-        readyForNextTrick = true;
+    public void readyToContinue() {
+        readyToContinue = true;
     }
 
     private void bid(DataInputStream in, DataOutputStream out) throws IOException, InterruptedException {
@@ -56,64 +60,72 @@ public class GameClient extends SocketThread {
 
     private void playRound(DataInputStream in, DataOutputStream out) throws IOException, InterruptedException {
         int trickNumber = 1;
-        boolean trumpsPlayed = false;
         for (int i = 0; i < 10; i++) {
             //Prepare for trick
             gameController.updateTrick(game.getTrick(), game.getTrickPlayers());
-            gameController.updateRoundInfo(game.getPlayers(), playerIndex, game.getTricksWon(), trickNumber);
+            gameController.updateRoundInfo(game.getPlayers(), playerIndex, game.getTricksWon(), trickNumber, game.getRoundNumber());
 
             //Play trick and display results
-            trumpsPlayed = playTrick(in, out, trumpsPlayed);
-            gameController.updateRoundInfo(game.getPlayers(), playerIndex, game.getTricksWon(), trickNumber);
+            playTrick(in, out);
+            gameController.updateRoundInfo(game.getPlayers(), playerIndex, game.getTricksWon(), trickNumber, game.getRoundNumber());
 
             //Wait for player to click continue
-            readyForNextTrick = false;
-            while (!readyForNextTrick) {
-                sleep(100);
-                if (exit) {
-                    return;
-                }
-            }
+            waitForContinue();
             out.writeBoolean(true);
             trickNumber++;
         }
+        boolean won = game.wasBidSuccessful();
+        gameController.updateRoundInfo(game.getPlayers(), playerIndex, game.getTricksWon(), trickNumber, game.getRoundNumber());
+        gameController.setRoundResults(game.getBid(), won, game.getBidWinner(), game.getTrickPoints(), game.getPlayers());
+        waitForContinue();
+        out.writeBoolean(true);
     }
 
-    private boolean playTrick(DataInputStream in, DataOutputStream out, boolean trumpsPlayed) throws IOException, InterruptedException {
+    private void waitForContinue() throws InterruptedException {
+        readyToContinue = false;
+        while (!readyToContinue) {
+            sleep(100);
+            if (exit) {
+                return;
+            }
+        }
+    }
+
+    private void playTrick(DataInputStream in, DataOutputStream out) throws IOException, InterruptedException {
         int playerTurn = receiveInt(in);
         while (playerTurn != -1) {
-            gameController.setPlayerTurn(game.getPlayers(), game.getBid().filterPlayable(game.getPlayer(playerTurn).getHand(), trumpsPlayed, game.getLeadingSuit()), playerTurn);
             playing = false;
             if (playerTurn == playerIndex) {
+                gameController.setPlayerTurn(game.getPlayers(),
+                    game.getBid().filterPlayable(game.getPlayer(playerTurn).getHand(), game.getTrumpsPlayed(), game.getLeadingSuit()),
+                    playerIndex, playerTurn);
                 playing = true;
                 while (playing) {
                     sleep(100);
                 }
                 out.writeUTF(cardPlayed.toString());
                 playing = true;
+            } else {
+                gameController.setPlayerTurn(game.getPlayers(), null, playerIndex, playerTurn);
             }
 
             Card played = new Card(receiveString(in));
             game.cardPlayed(played, playerTurn, playing);
-            if (played.getSuit() == game.getBid().getTrumpSuit()) {
-                trumpsPlayed = true;
-            }
             gameController.updateTrick(game.getTrick(), game.getTrickPlayers());
             if (playerTurn == playerIndex) {
-                gameController.updateHand(game.getPlayer(playerIndex).getHand());
+                gameController.updateHand(game.getPlayer(playerIndex).getHand(), null);
             }
             playerTurn = receiveInt(in);
         }
         game.findTrickWinner();
         Player winner = game.getPlayer(receiveInt(in));
         gameController.setTrickResults(winner);
-        gameController.setPlayerTurn(game.getPlayers(), null, -1);
-        return trumpsPlayed;
+        gameController.setPlayerTurn(game.getPlayers(), null, playerIndex, -1);
     }
 
     @Override
     void afterConnection() throws IOException, InterruptedException {
-        gameController.updateHand(new ArrayList<>());
+        gameController.updateHand(new ArrayList<>(), null);
         DataInputStream in = clientSockets.get(0).in;
         DataOutputStream out = clientSockets.get(0).out;
 

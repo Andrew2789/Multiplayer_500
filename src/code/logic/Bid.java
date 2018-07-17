@@ -104,11 +104,45 @@ public class Bid {
             trumpSuit == 'h' && card.getSuit() == 'd');
     }
 
+    public int getTricks() {
+        return tricks;
+    }
+
     public char getTrumpSuit() {
         return trumpSuit;
     }
 
     public String toString() {
         return Character.toString(trumpSuit) + tricks;
+    }
+
+    public String toDisplayString() {
+        String suitName;
+        switch (trumpSuit) {
+            case 's':
+                suitName = "spades";
+                break;
+            case 'c':
+                suitName = "clubs";
+                break;
+            case 'd':
+                suitName = "diamonds";
+                break;
+            case 'h':
+                suitName = "hearts";
+                break;
+            case 'n':
+                suitName = "no trumps";
+                break;
+            case 'm':
+                if (tricks == 0) {
+                    return "misere";
+                } else {
+                    return "open misere";
+                }
+                default:
+                    throw new IllegalStateException("Invalid trump suit.");
+        }
+        return String.format("%d %s", tricks, suitName);
     }
 }

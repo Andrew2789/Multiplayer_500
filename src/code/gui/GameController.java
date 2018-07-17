@@ -1,10 +1,9 @@
 package code.gui;
 
+import code.logic.Bid;
 import code.logic.Card;
 import code.logic.Main;
 import code.logic.Player;
-
-import java.awt.event.MouseEvent;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,7 +15,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.HPos;
 import javafx.geometry.Orientation;
-import javafx.geometry.Pos;
 import javafx.geometry.VPos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -27,7 +25,6 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
 
 public class GameController implements Initializable {
     @FXML
@@ -37,20 +34,20 @@ public class GameController implements Initializable {
     @FXML
     private Pane gridSize, cardHeight;
     @FXML
-    private Label roundInfoLabel, turnLabel, trickResultLabel, dragGuideLabel;
+    private Label roundInfoLabel, turnLabel, resultsLabel, dragGuideLabel;
     @FXML
     private ListView<String> roundOrderList;
     @FXML
-    private Button endTrickButton;
+    private Button continueButton;
     @FXML
     private BorderPane dragGuide;
 
     private Map<Card, Image> cardImages = new HashMap<>();
-
     private List<CardView> trickView = new ArrayList<>();
     private List<Label> trickLabels = new ArrayList<>();
     private List<CardView> handView = new ArrayList<>();
 
+    private boolean playing = false;
     private int predictorCell;
     private List<Separator> predictors = new ArrayList<>();
 
@@ -58,18 +55,26 @@ public class GameController implements Initializable {
 
     private int trickSize = 4, handSize = 10;
 
-    public void updateHand(List<Card> hand) {
+    public void updateHand(List<Card> hand, List<Card> playableCards) {
         if (hand.size() > handSize) {
             System.err.println(String.format("Hand size larger than %d (%d).", handSize, hand.size()));
             return;
         }
         for (int i = 0; i < hand.size(); i++) {
-            if (hand.get(i) != null) {
-                handView.get(i).setCard(hand.get(i), cardImages.get(hand.get(i)));
-                handView.get(i).setVisible(true);
-            } else {
-                handView.get(i).setVisible(false);
+            handView.get(i).setCard(hand.get(i), cardImages.get(hand.get(i)));
+            handView.get(i).setVisible(true);
+            handView.get(i).setOpacity(0.7);
+            if (playableCards != null) {
+                for (Card card : playableCards) {
+                    if (handView.get(i).getCard().equals(card)) {
+                        handView.get(i).setOpacity(1);
+                        break;
+                    }
+                }
             }
+        }
+        for (int i = hand.size(); i < 10; i++) {
+            handView.get(i).setVisible(false);
         }
     }
 
@@ -92,40 +97,34 @@ public class GameController implements Initializable {
         });
     }
 
-    public void updateRoundInfo(List<Player> players, int selfIndex, List<Integer> tricksWon, int trickNum) {
+    public void updateRoundInfo(List<Player> players, int selfIndex, List<Integer> tricksWon, int trickNum, int roundNum) {
         Platform.runLater(() -> roundInfoLabel.setText(String.format(
             "You are playing as %s\n"
-                + "Round 1, Trick %d\n\n"
-                + "%s & %s: %d tricks won, %dpts\n"
-                + "%s & %s: %d tricks won, %dpts", players.get(selfIndex).getName(), trickNum,
-            players.get(0).getName(), players.get(2).getName(), tricksWon.get(0), players.get(0).getPoints(),
-            players.get(1).getName(), players.get(3).getName(), tricksWon.get(1), players.get(1).getPoints())));
+                + "Round %d, Trick %d\n\n"
+                + "Team 1: %dpts, %d tricks won this round (%s & %s)\n"
+                + "Team 2: %dpts, %d tricks won this round (%s & %s)", players.get(selfIndex).getName(), roundNum, trickNum,
+            players.get(0).getPoints(), tricksWon.get(0), players.get(0).getName(), players.get(2).getName(),
+            players.get(1).getPoints(), tricksWon.get(1), players.get(1).getName(), players.get(3).getName())));
     }
 
-    public void setPlayerTurn(List<Player> players, List<Card> playableCards, int index) {
+    public void setPlayerTurn(List<Player> players, List<Card> playableCards, int selfIndex, int currentPlayer) {
         Platform.runLater(() -> {
             roundOrderList.getItems().clear();
             for (int i = 0; i < players.size(); i++) {
-                if (i == index) {
+                if (i == currentPlayer) {
                     roundOrderList.getItems().add(players.get(i).getName() + " (playing)");
                 } else {
                     roundOrderList.getItems().add(players.get(i).getName());
                 }
             }
             if (playableCards != null) {
+                playing = true;
                 turnLabel.setText("Your turn");
-                for (CardView cardView : handView) {
-                    cardView.setOpacity(0.7);
-                    for (Card card: playableCards) {
-                        if (cardView.getCard().equals(card)) {
-                            cardView.setOpacity(1);
-                            break;
-                        }
-                    }
-                }
+                updateHand(players.get(selfIndex).getHand(), playableCards);
             } else {
-                if (index != -1) {
-                    turnLabel.setText(players.get(index).getName() + "'s turn");
+                playing = false;
+                if (currentPlayer != -1) {
+                    turnLabel.setText(players.get(currentPlayer).getName() + "'s turn");
                 }
                 for (CardView cardView: handView) {
                     cardView.setOpacity(0.7);
@@ -153,17 +152,32 @@ public class GameController implements Initializable {
             for (CardView cardView: handView) {
                 cardView.setOpacity(0.7);
             }
-            trickResultLabel.setText(winner.getName() + " won the trick.");
-            trickResultLabel.setVisible(true);
-            endTrickButton.setVisible(true);
+            resultsLabel.setText(winner.getName() + " won the trick.");
+            resultsLabel.setVisible(true);
+            continueButton.setVisible(true);
         });
     }
 
-    public void endTrick() {
-        trickResultLabel.setVisible(false);
-        endTrickButton.setVisible(false);
-        Main.gameClient.readyForNextTrick();
+    public void setRoundResults(Bid bid, boolean won, int bidWinnder, int trickPoints, List<Player> players) {
+        Platform.runLater(() -> {
+            int playingTeam = bidWinnder % 2,
+                opposingTeam = (bidWinnder + 1) % 2,
+                points = won ? bid.getPoints() : -bid.getPoints();
+            String roundResult = won ? "achieved" : "failed to achieve";
+            resultsLabel.setText(String.format("Team %d (%s & %s) %s their bid of %s, earning %d points.\n"
+                + "Team %d (%s & %s) gained %d pts from winning tricks.",
+                playingTeam, players.get(playingTeam).getName(), players.get(playingTeam + 2).getName(), roundResult, bid.toDisplayString(), points,
+                opposingTeam, players.get(opposingTeam).getName(), players.get(opposingTeam + 2).getName(), trickPoints));
+            resultsLabel.setVisible(true);
+            continueButton.setVisible(true);
+        });
+    }
+
+    public void continueClicked() {
+        resultsLabel.setVisible(false);
+        continueButton.setVisible(false);
         turnLabel.setText("Waiting for other players to continue...");
+        Main.gameClient.readyToContinue();
     }
 
     private int getNewCardIndex(double sceneX) {
@@ -178,7 +192,7 @@ public class GameController implements Initializable {
     }
 
     private void adjustPredictors(int index, CardView cardView) {
-        if (predictorCell != index) {
+        if (predictorCell != index || !predictors.get(1).isVisible()) {
             boolean centred = false;
             if (handView.indexOf(cardView) == index || handView.indexOf(cardView) == index - 1) {
                 centred = true;
@@ -202,6 +216,24 @@ public class GameController implements Initializable {
                 cardPane.add(predictors.get(0), predictorCell - 1, 0);
             }
         }
+    }
+
+    private void hidePredictors() {
+        for (Separator predictor: predictors) {
+            cardPane.getChildren().remove(predictors.get(1));
+            if (predictor.isVisible()) {
+                cardPane.getChildren().remove(predictor);
+                predictor.setVisible(false);
+            }
+        }
+    }
+
+    private boolean isInTrickRegion(double x, double y) {
+        double trickX = 10 + playedCardsPane.getLayoutX() + dragGuide.getLayoutX();
+        double trickY = 10 + playedCardsPane.getLayoutY() + dragGuide.getLayoutY();
+        return (
+            x >= trickX && x < trickX + dragGuide.getWidth() &&
+            y >= trickY && y < trickY + dragGuide.getHeight());
     }
 
     @Override
@@ -234,8 +266,7 @@ public class GameController implements Initializable {
             card.fitWidthProperty().bind(gridSize.widthProperty());
             GridPane.setHalignment(card, HPos.CENTER);
             card.setOnMousePressed(mouseEvent -> {
-                if (beingDragged == null) {
-                    dragGuide.setVisible(true);
+                if (beingDragged == null && card.isVisible()) {
                     beingDragged = card;
                     cardPane.getChildren().remove(card);
                     mainPane.getChildren().add(card);
@@ -243,6 +274,11 @@ public class GameController implements Initializable {
                     AnchorPane.setTopAnchor(card, mouseEvent.getSceneY() - cardHeight.getWidth() * 0.5);
 
                     adjustPredictors(handView.indexOf(card), card);
+                    if (playing && card.getOpacity() > 0.9) {
+                        dragGuide.setStyle("-fx-background-color: #fff; -fx-opacity: 0.4;");
+                        dragGuide.toFront();
+                        dragGuide.setVisible(true);
+                    }
                 }
             });
             card.setOnMouseDragged(mouseEvent -> {
@@ -250,7 +286,15 @@ public class GameController implements Initializable {
                     AnchorPane.setLeftAnchor(card, mouseEvent.getSceneX() - gridSize.getWidth() * 0.5);
                     AnchorPane.setTopAnchor(card, mouseEvent.getSceneY() - cardHeight.getWidth() * 0.5);
 
-                    adjustPredictors(getNewCardIndex(mouseEvent.getSceneX()), card);
+                    if (!playing || card.getOpacity() < 0.9) {
+                        adjustPredictors(getNewCardIndex(mouseEvent.getSceneX()), card);
+                    } else if (isInTrickRegion(mouseEvent.getSceneX(), mouseEvent.getSceneY())) {
+                        dragGuide.setStyle("-fx-background-color: #dae7f1; -fx-opacity: 0.4;");
+                        hidePredictors();
+                    } else {
+                        dragGuide.setStyle("-fx-background-color: #fff; -fx-opacity: 0.4;");
+                        adjustPredictors(getNewCardIndex(mouseEvent.getSceneX()), card);
+                    }
                 }
             });
             card.setOnMouseReleased(mouseEvent -> {
@@ -260,17 +304,12 @@ public class GameController implements Initializable {
                     cardPane.add(card, handView.indexOf(card), 0);
                     beingDragged = null;
 
-                    cardPane.getChildren().remove(predictors.get(1));
-                    if (predictors.get(0).isVisible()) {
-                        cardPane.getChildren().remove(predictors.get(0));
+                    hidePredictors();
+                    if (playing && card.getOpacity() > 0.9 && isInTrickRegion(mouseEvent.getSceneX(), mouseEvent.getSceneY())) {
+                        Main.gameClient.cardPlayed(card.getCard());
+                    } else {
+                        Main.gameClient.moveCard(handView.indexOf(card), getNewCardIndex(mouseEvent.getSceneX()));
                     }
-                    predictors.get(0).setVisible(false);
-                    predictors.get(1).setVisible(false);
-
-                    Main.gameClient.moveCard(handView.indexOf(card), getNewCardIndex(mouseEvent.getSceneX()));
-                }
-                if (card.isVisible() && card.getOpacity() > 0.9) {
-                    Main.gameClient.cardPlayed(card.getCard());
                 }
             });
             cardPane.add(card, i, 0);

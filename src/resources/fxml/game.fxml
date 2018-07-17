@@ -10,10 +10,10 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-
-<AnchorPane fx:id="mainPane" minHeight="0.0" minWidth="0.0" prefHeight="600.0" prefWidth="800.0" stylesheets="@../css/gui.css" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml/1" fx:controller="code.gui.GameController">
+<AnchorPane fx:id="mainPane" minHeight="0.0" minWidth="0.0" prefHeight="600.0" prefWidth="800.0" stylesheets="@../css/gui.css" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="code.gui.GameController">
    <children>
       <GridPane layoutX="10.0" layoutY="10.0" visible="false" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
         <columnConstraints>
@@ -114,23 +114,7 @@
                   <Insets top="15.0" />
                </BorderPane.margin>
                <children>
-                  <Button fx:id="endTrickButton" mnemonicParsing="false" onAction="#endTrick" text="Continue" visible="false" GridPane.columnIndex="5" GridPane.halignment="CENTER" GridPane.rowIndex="1">
-                     <font>
-                        <Font size="14.0" />
-                     </font>
-                     <GridPane.margin>
-                        <Insets top="35.0" />
-                     </GridPane.margin>
-                  </Button>
-                  <Label fx:id="trickResultLabel" text="\%s won the trick." visible="false" wrapText="true" GridPane.columnIndex="5" GridPane.halignment="CENTER" GridPane.rowIndex="1">
-                     <font>
-                        <Font size="14.0" />
-                     </font>
-                     <GridPane.margin>
-                        <Insets bottom="35.0" />
-                     </GridPane.margin>
-                  </Label>
-                  <BorderPane fx:id="dragGuide" style="-fx-background-color: #fff; -fx-opacity: 0.3;" visible="false" GridPane.columnIndex="1" GridPane.columnSpan="4" GridPane.rowIndex="1">
+                  <BorderPane fx:id="dragGuide" visible="false" GridPane.columnIndex="1" GridPane.columnSpan="4" GridPane.rowIndex="1">
                      <center>
                         <Label fx:id="dragGuideLabel" style="-fx-text-fill: #1d3549;;" text="Drag cursor here to play card" wrapText="true">
                            <font>
@@ -139,6 +123,23 @@
                         </Label>
                      </center>
                   </BorderPane>
+                  <VBox alignment="CENTER" minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="5" GridPane.rowIndex="1">
+                     <children>
+                        <Label fx:id="resultsLabel" text="\%s won the trick." visible="false" wrapText="true">
+                           <font>
+                              <Font size="14.0" />
+                           </font>
+                           <VBox.margin>
+                              <Insets bottom="10.0" />
+                           </VBox.margin>
+                        </Label>
+                        <Button fx:id="continueButton" mnemonicParsing="false" onAction="#continueClicked" text="Continue" visible="false">
+                           <font>
+                              <Font size="14.0" />
+                           </font>
+                        </Button>
+                     </children>
+                  </VBox>
                </children>
             </GridPane>
          </center>

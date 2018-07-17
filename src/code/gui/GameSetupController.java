@@ -68,6 +68,7 @@ public class GameSetupController implements Initializable {
             if (team1List.getItems().size() + team2List.getItems().size() == 4) {
                 statusLabel.setText("Allocate 2 players to each team to continue");
             }
+            checkContinueValid();
         });
     }
 

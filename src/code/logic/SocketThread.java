@@ -130,13 +130,13 @@ public abstract class SocketThread extends Thread {
 					onSuccess.run();
 					afterConnection();
 				}
-			} catch (IOException | InterruptedException e) {
+			} catch (IOException | InterruptedException | IllegalArgumentException e) {
 				e.printStackTrace();
 			}
 		} else {
 			try {
 				afterConnection();
-			} catch (IOException | InterruptedException e) {
+			} catch (IOException | InterruptedException | IllegalArgumentException e) {
 				e.printStackTrace();
 			}
 		}

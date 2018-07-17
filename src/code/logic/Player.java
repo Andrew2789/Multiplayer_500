@@ -34,6 +34,12 @@ public class Player {
         points += won ? bid.getPoints() : -bid.getPoints();
     }
 
+    public void updatePoints(int points, Bid bid) {
+        if (bid.getTrumpSuit() != 'm') {
+            this.points += points;
+        }
+    }
+
     public Card playCard(Card card) {
         hand.remove(card);
         return card;
