@@ -39,6 +39,13 @@ public class Player {
         return card;
     }
 
+    public void moveCard(int oldIndex, int newIndex) {
+        if (oldIndex < newIndex) {
+            newIndex--;
+        }
+        hand.add(newIndex, hand.remove(oldIndex));
+    }
+
     public void setHand(List<Card> hand) {
         this.hand = hand;
     }

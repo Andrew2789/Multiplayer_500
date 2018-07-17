@@ -30,6 +30,11 @@ public class GameClient extends SocketThread {
         }
     }
 
+    public void moveCard(int oldIndex, int newIndex) {
+        game.getPlayer(playerIndex).moveCard(oldIndex, newIndex);
+        gameController.updateHand(game.getPlayer(playerIndex).getHand());
+    }
+
     private boolean initializeRound(DataInputStream in) throws IOException {
         if (!receiveBool(in)) {
             return false; //Game over
