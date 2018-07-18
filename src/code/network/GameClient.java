@@ -1,5 +1,9 @@
-package code.logic;
+package code.network;
 
+import code.game.Bid;
+import code.game.Card;
+import code.game.Game;
+import code.game.Player;
 import code.gui.GameController;
 
 import java.io.DataInputStream;
@@ -10,6 +14,7 @@ import java.util.List;
 
 public class GameClient extends SocketThread {
     private GameController gameController;
+    private ChatClient chatClient;
     private String name;
     private Card cardPlayed = null;
     private boolean playing, readyToContinue;
@@ -40,7 +45,7 @@ public class GameClient extends SocketThread {
     }
 
     public void submitChatMessage(String message) {
-        gameController.addChatMessage(name, message);
+        chatClient.sendMessage(message);
     }
 
     public void readyToContinue() {
@@ -63,7 +68,13 @@ public class GameClient extends SocketThread {
         DataInputStream in = clientSockets.get(0).in;
         DataOutputStream out = clientSockets.get(0).out;
 
+        out.writeBoolean(true); //register as a game socket (not chat)
+
         out.writeUTF(name);
+        name = receiveString(in);
+        chatClient = new ChatClient(name, ipAddress, port, () -> System.out.println("Chat failed to connect."), () -> System.out.println("Chat connected."), () -> {}, gameController);
+        Main.setChatClient(chatClient);
+        chatClient.start();
         receiveBool(in);
         gameController.setRoundInfoLabelText("Waiting the host to choose teams...");
         playerIndex = receiveInt(in);

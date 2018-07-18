@@ -1,4 +1,4 @@
-package code.logic;
+package code.game;
 
 public class Card {
     private char suit;

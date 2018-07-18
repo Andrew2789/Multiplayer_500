@@ -1,5 +1,9 @@
-package code.logic;
+package code.network;
 
+import code.game.Bid;
+import code.game.Card;
+import code.game.Game;
+import code.game.Player;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -8,6 +12,7 @@ import java.util.List;
 public class GameServer extends SocketThread {
     private Game game;
     private boolean teamsSet = false;
+    private ChatServer chatServer;
 
     public GameServer(int port, int players, Runnable onFail, Runnable onSuccess, Runnable onServerConnected, Runnable onDisconnect) {
         super(port, players, onFail, onSuccess, onServerConnected, onDisconnect);
@@ -43,16 +48,26 @@ public class GameServer extends SocketThread {
     @Override
     void afterConnection() throws IOException, InterruptedException {
         System.out.println("Server started");
+        chatServer = new ChatServer(() -> {});
+        Main.setChatServer(chatServer);
+        chatServer.start();
         List<Player> players = new ArrayList<>();
-        while (players.size() < 4) {
+        int chatClients = 0;
+        while (players.size() < 4 || chatClients < 4) {
             acceptConnection();
             if (exit) {
                 return;
             }
-
-            String name = receiveString(clientSockets.get(connections - 1).in);
-            players.add(new Player(getUniquePlayerName(players, name)));
-            Main.gameSetupController.addPlayer(players.get(players.size() - 1));
+            if (receiveBool(clientSockets.get(connections - 1).in)) {
+                String name = getUniquePlayerName(players, receiveString(clientSockets.get(connections - 1).in));
+                players.add(new Player(name));
+                clientSockets.get(connections - 1).out.writeUTF(name);
+                Main.gameSetupController.addPlayer(players.get(players.size() - 1));
+            } else {
+                //Pass the connection to the chat server
+                chatServer.addClient(clientSockets.remove(connections - 1));
+                chatClients++;
+            }
         }
 
         for (ClientSocket clientSocket: clientSockets) {

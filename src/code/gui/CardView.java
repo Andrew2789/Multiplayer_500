@@ -1,6 +1,6 @@
 package code.gui;
 
-import code.logic.Card;
+import code.game.Card;
 
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;

@@ -1,9 +1,9 @@
 package code.gui;
 
-import code.logic.Bid;
-import code.logic.Card;
-import code.logic.Main;
-import code.logic.Player;
+import code.game.Bid;
+import code.game.Card;
+import code.network.Main;
+import code.game.Player;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -245,13 +245,12 @@ public class GameController implements Initializable {
             y >= trickY && y < trickY + dragGuide.getHeight());
     }
 
-    public void addChatMessage(String name, String message) {
+    public void addChatMessage(String message) {
         Platform.runLater(() -> {
-            String chatString = String.format("%s: %s", name, message);
             if (chatTextArea.getText().isEmpty()) {
-                chatTextArea.setText(chatString);
+                chatTextArea.setText(message);
             } else {
-                chatTextArea.setText(chatTextArea.getText() + "\n" + chatString);
+                chatTextArea.setText(chatTextArea.getText() + "\n" + message);
             }
         });
     }
@@ -275,6 +274,7 @@ public class GameController implements Initializable {
         }
         GridPane.setHalignment(predictors.get(0), HPos.RIGHT);
 
+        chatTextArea.textProperty().addListener((observable, oldValue, newValue) -> chatTextArea.setScrollTop(Double.MAX_VALUE));
         chatTextField.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.ENTER) {
                 submitChatMessage();

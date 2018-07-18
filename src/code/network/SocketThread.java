@@ -1,4 +1,4 @@
-package code.logic;
+package code.network;
 
 import java.io.DataInputStream;
 import java.io.IOException;
@@ -51,10 +51,8 @@ public abstract class SocketThread extends Thread {
         this.onDisconnect = onDisconnect;
 	}
 
-	public SocketThread(List<ClientSocket> clientSockets, Runnable onFail, Runnable onSuccess, Runnable onDisconnect) {
+	public SocketThread(List<ClientSocket> clientSockets, Runnable onDisconnect) {
 		this.clientSockets = clientSockets;
-        this.onFail = onFail;
-        this.onSuccess = onSuccess;
         this.onDisconnect = onDisconnect;
 		ownsSocket = false;
 	}
@@ -124,33 +122,29 @@ public abstract class SocketThread extends Thread {
 	}
 
 	public void run() {
-		if (ownsSocket) { //Only set up socket connections and io streams if owner, otherwise it should already be done
-			try {
+		try {
+			if (ownsSocket) { //Only set up socket connections and io streams if owner, otherwise it should already be done
 				if (initializeSockets()) {
 					onSuccess.run();
 					afterConnection();
 				}
-			} catch (IOException | InterruptedException | IllegalArgumentException e) {
-				e.printStackTrace();
-			}
-		} else {
-			try {
+			} else {
 				afterConnection();
-			} catch (IOException | InterruptedException | IllegalArgumentException e) {
-				e.printStackTrace();
 			}
-		}
+		} catch (IOException | InterruptedException e) {
+			e.printStackTrace();
+		} finally {
+			onDisconnect.run();
 
-		onDisconnect.run();
-
-		for (ClientSocket clientSocket: clientSockets) {
-		    clientSocket.tearDown();
-        }
-		if (serverSocket != null) {
-			try {
-				serverSocket.close();
-			} catch (IOException e) {
-				e.printStackTrace();
+			for (ClientSocket clientSocket: clientSockets) {
+				clientSocket.tearDown();
+			}
+			if (serverSocket != null) {
+				try {
+					serverSocket.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	}
@@ -181,6 +175,9 @@ public abstract class SocketThread extends Thread {
 			} catch (SocketTimeoutException e) {
 			}
 		}
+		if (out == null) {
+			out = -1;
+		}
 		return out;
 	}
 
@@ -191,6 +188,9 @@ public abstract class SocketThread extends Thread {
 				out = in.readBoolean();
 			} catch (SocketTimeoutException e) {
 			}
+		}
+		if (out == null) {
+			out = false;
 		}
 		return out;
 	}

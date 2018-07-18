@@ -1,7 +1,7 @@
 package code.gui;
 
-import code.logic.Main;
-import code.logic.Player;
+import code.network.Main;
+import code.game.Player;
 import java.net.URL;
 import java.util.ResourceBundle;
 import javafx.application.Platform;
@@ -10,6 +10,9 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
 
 public class GameSetupController implements Initializable {
     @FXML
@@ -18,6 +21,10 @@ public class GameSetupController implements Initializable {
     private Button moveToTeam1Button, moveToTeam2Button, continueButton;
     @FXML
     private Label statusLabel;
+    @FXML
+    private TextField chatTextField;
+    @FXML
+    private TextArea chatTextArea;
 
     private boolean movingPlayer = false;
 
@@ -72,9 +79,34 @@ public class GameSetupController implements Initializable {
         });
     }
 
+    public void addChatMessage(String message) {
+        Platform.runLater(() -> {
+            if (chatTextArea.getText().isEmpty()) {
+                chatTextArea.setText(message);
+            } else {
+                chatTextArea.setText(chatTextArea.getText() + "\n" + message);
+            }
+        });
+    }
+
+    private void submitChatMessage() {
+        if (!chatTextField.getText().isEmpty()) {
+            Main.gameClient.submitChatMessage(chatTextField.getText());
+            chatTextField.setText("");
+        }
+    }
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         Main.setGameSetupController(this);
+
+        chatTextArea.textProperty().addListener((observable, oldValue, newValue) -> chatTextArea.setScrollTop(Double.MAX_VALUE));
+        chatTextField.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER) {
+                submitChatMessage();
+            }
+        });
+
         team1List.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
             if (!movingPlayer) {
                 checkSelectionNumber(1);

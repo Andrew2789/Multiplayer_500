@@ -1,4 +1,4 @@
-package code.logic;
+package code.network;
 
 import code.gui.GameController;
 import code.gui.GameSetupController;
@@ -15,6 +15,8 @@ import javafx.stage.Stage;
 public class Main extends Application {
     public static GameServer gameServer;
     public static GameClient gameClient;
+    private static ChatClient chatClient;
+    private static ChatServer chatServer;
     private static Scene login, gameSetup, game;
     private static Stage stage;
     private static boolean gameShown = false;
@@ -33,6 +35,14 @@ public class Main extends Application {
 
     public static void setGameSetupController(GameSetupController gameSetupController) {
         Main.gameSetupController = gameSetupController;
+    }
+
+    public static void setChatClient(ChatClient chatClient) {
+        Main.chatClient = chatClient;
+    }
+
+    public static void setChatServer(ChatServer chatServer) {
+        Main.chatServer = chatServer;
     }
 
     private static void waitUntilConnected() {
@@ -69,14 +79,22 @@ public class Main extends Application {
     }
 
     public static void killThreads() {
-    	if (gameServer != null) {
+        if (gameServer != null) {
             gameServer.exit();
-		}
-		if (gameClient != null) {
+        }
+        if (gameClient != null) {
             gameClient.exit();
-		}
+        }
+        if (chatClient != null) {
+            chatClient.exit();
+        }
+        if (chatServer != null) {
+            chatServer.exit();
+        }
         gameServer = null;
         gameClient = null;
+        chatClient = null;
+        chatServer = null;
     }
 
     public static void showLogin() {
@@ -89,10 +107,10 @@ public class Main extends Application {
     }
 
     public static void showGameSetup() {
-        stage.setMinWidth(400);
-        stage.setMinHeight(250);
+        stage.setMinWidth(500);
+        stage.setMinHeight(300);
         stage.setScene(gameSetup);
-        stage.setWidth(600);
+        stage.setWidth(800);
         stage.setHeight(400);
         stage.setResizable(true);
     }
@@ -128,7 +146,7 @@ public class Main extends Application {
 
         try {
             login = new Scene(FXMLLoader.load(getClass().getResource("/resources/fxml/connection.fxml")), 500, 280);
-            gameSetup = new Scene(FXMLLoader.load(getClass().getResource("/resources/fxml/gameSetup.fxml")), 600, 400);
+            gameSetup = new Scene(FXMLLoader.load(getClass().getResource("/resources/fxml/gameSetup.fxml")), 800, 400);
             game = new Scene(FXMLLoader.load(getClass().getResource("/resources/fxml/game.fxml")), 1366, 768);
             showLogin();
 			stage.show();

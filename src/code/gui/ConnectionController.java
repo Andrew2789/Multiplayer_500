@@ -1,6 +1,6 @@
 package code.gui;
 
-import code.logic.Main;
+import code.network.Main;
 import java.net.URL;
 import java.util.ResourceBundle;
 

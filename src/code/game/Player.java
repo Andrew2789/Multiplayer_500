@@ -1,5 +1,7 @@
-package code.logic;
+package code.game;
 
+import code.game.Bid;
+import code.game.Card;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
