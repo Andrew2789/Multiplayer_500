@@ -50,27 +50,8 @@ public class GameServer extends SocketThread {
                 return;
             }
 
-            //Ensure name is not duplicate
             String name = receiveString(clientSockets.get(connections - 1).in);
-            boolean duplicateFound = false;
-            for (Player player : players) {
-                if (player.getName().equals(name)) {
-                    duplicateFound = true;
-                    name += " ";
-                    break;
-                }
-            }
-            while (duplicateFound) {
-                duplicateFound = false;
-                name += "I";
-                for (Player player : players) {
-                    if (player.getName().equals(name)) {
-                        duplicateFound = true;
-                        break;
-                    }
-                }
-            }
-            players.add(new Player(name));
+            players.add(new Player(getUniquePlayerName(players, name)));
             Main.gameSetupController.addPlayer(players.get(players.size() - 1));
         }
 
@@ -100,6 +81,28 @@ public class GameServer extends SocketThread {
         while (true) {
             playRound();
         }
+    }
+
+    private String getUniquePlayerName(List<Player> players, String name) {
+        boolean duplicateFound = false;
+        for (Player player : players) {
+            if (player.getName().equals(name)) {
+                duplicateFound = true;
+                name += " ";
+                break;
+            }
+        }
+        while (duplicateFound) {
+            duplicateFound = false;
+            name += "I";
+            for (Player player : players) {
+                if (player.getName().equals(name)) {
+                    duplicateFound = true;
+                    break;
+                }
+            }
+        }
+        return name;
     }
 
     private void playRound() throws IOException {
@@ -146,7 +149,7 @@ public class GameServer extends SocketThread {
             }
             game.cardPlayed(played, currentPlayer, true);
             cardsPlayed++;
-        } while (cardsPlayed < game.getPlayers().size());
+        } while (cardsPlayed < game.getPlayers().size() && !exit);
 
         int winnerIndex = game.getPlayers().indexOf(game.findTrickWinner());
         //Signal that the trick is over, and send the winner to all players

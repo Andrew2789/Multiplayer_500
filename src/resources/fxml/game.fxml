@@ -4,6 +4,9 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
@@ -13,7 +16,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane fx:id="mainPane" minHeight="0.0" minWidth="0.0" prefHeight="600.0" prefWidth="800.0" stylesheets="@../css/gui.css" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="code.gui.GameController">
+<AnchorPane fx:id="mainPane" minHeight="0.0" minWidth="0.0" prefHeight="600.0" prefWidth="800.0" stylesheets="@../css/gui.css" xmlns="http://javafx.com/javafx/9.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="code.gui.GameController">
    <children>
       <GridPane layoutX="10.0" layoutY="10.0" visible="false" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
         <columnConstraints>
@@ -97,51 +100,76 @@
             </GridPane>
          </bottom>
          <center>
-            <GridPane fx:id="playedCardsPane" minHeight="0.0" minWidth="0.0" prefHeight="0.0" BorderPane.alignment="CENTER">
-               <columnConstraints>
-                  <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="30.0" />
-                  <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="10.0" prefWidth="100.0" />
-                  <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="10.0" prefWidth="100.0" />
-                  <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="10.0" prefWidth="100.0" />
-                  <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" percentWidth="10.0" prefWidth="100.0" />
-                  <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-               </columnConstraints>
-               <rowConstraints>
-                  <RowConstraints maxHeight="25.0" minHeight="25.0" prefHeight="25.0" vgrow="SOMETIMES" />
-                  <RowConstraints maxHeight="${cardHeight.width}" minHeight="10.0" prefHeight="${cardHeight.width}" vgrow="SOMETIMES" />
-               </rowConstraints>
+            <SplitPane fx:id="middleContainer" dividerPositions="0.65" BorderPane.alignment="CENTER">
                <BorderPane.margin>
-                  <Insets top="15.0" />
+                  <Insets bottom="10.0" top="15.0" />
                </BorderPane.margin>
-               <children>
-                  <BorderPane fx:id="dragGuide" visible="false" GridPane.columnIndex="1" GridPane.columnSpan="4" GridPane.rowIndex="1">
-                     <center>
-                        <Label fx:id="dragGuideLabel" style="-fx-text-fill: #1d3549;;" text="Drag cursor here to play card" wrapText="true">
+               <items>
+                  <GridPane fx:id="playedCardsPane" minHeight="0.0" minWidth="0.0" prefHeight="0.0">
+                     <columnConstraints>
+                        <ColumnConstraints hgrow="SOMETIMES" minWidth="75.0" />
+                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="${gridSize.width}" minWidth="${gridSize.width}" prefWidth="${gridSize.width}" />
+                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="${gridSize.width}" minWidth="${gridSize.width}" prefWidth="${gridSize.width}" />
+                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="${gridSize.width}" minWidth="${gridSize.width}" prefWidth="${gridSize.width}" />
+                        <ColumnConstraints hgrow="SOMETIMES" maxWidth="${gridSize.width}" minWidth="${gridSize.width}" prefWidth="${gridSize.width}" />
+                     </columnConstraints>
+                     <rowConstraints>
+                        <RowConstraints maxHeight="25.0" minHeight="25.0" prefHeight="25.0" vgrow="SOMETIMES" />
+                        <RowConstraints maxHeight="${cardHeight.width}" minHeight="10.0" prefHeight="${cardHeight.width}" vgrow="SOMETIMES" />
+                     </rowConstraints>
+                     <children>
+                        <BorderPane fx:id="dragGuide" visible="false" GridPane.columnIndex="1" GridPane.columnSpan="4" GridPane.rowIndex="1">
+                           <center>
+                              <Label fx:id="dragGuideLabel" style="-fx-text-fill: #1d3549;;" text="Drag cursor here to play card" wrapText="true">
+                                 <font>
+                                    <Font size="25.0" />
+                                 </font>
+                              </Label>
+                           </center>
+                        </BorderPane>
+                        <VBox alignment="CENTER" minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="100.0" GridPane.rowIndex="1">
+                           <children>
+                              <Label fx:id="trickResultsLabel" text="\%s won the trick." visible="false" wrapText="true">
+                                 <font>
+                                    <Font size="14.0" />
+                                 </font>
+                                 <VBox.margin>
+                                    <Insets bottom="10.0" left="10.0" right="10.0" />
+                                 </VBox.margin>
+                              </Label>
+                              <Button fx:id="continueButton" mnemonicParsing="false" onAction="#continueClicked" text="Continue" visible="false">
+                                 <font>
+                                    <Font size="14.0" />
+                                 </font>
+                              </Button>
+                           </children>
+                        </VBox>
+                        <Label fx:id="roundResultsLabel" text="\%s won the trick." visible="false" wrapText="true" GridPane.columnIndex="1" GridPane.columnSpan="4" GridPane.halignment="CENTER" GridPane.rowSpan="2">
                            <font>
-                              <Font size="25.0" />
+                              <Font size="14.0" />
                            </font>
                         </Label>
-                     </center>
-                  </BorderPane>
-                  <VBox alignment="CENTER" minHeight="0.0" minWidth="0.0" prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="5" GridPane.rowIndex="1">
+                     </children>
+                  </GridPane>
+                  <VBox>
                      <children>
-                        <Label fx:id="resultsLabel" text="\%s won the trick." visible="false" wrapText="true">
+                        <TextArea fx:id="chatTextArea" editable="false" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="0.0" minWidth="0.0" wrapText="true" VBox.vgrow="ALWAYS">
                            <font>
                               <Font size="14.0" />
                            </font>
                            <VBox.margin>
-                              <Insets bottom="10.0" />
+                              <Insets bottom="2.0" />
                            </VBox.margin>
-                        </Label>
-                        <Button fx:id="continueButton" mnemonicParsing="false" onAction="#continueClicked" text="Continue" visible="false">
+                        </TextArea>
+                        <TextField fx:id="chatTextField">
                            <font>
                               <Font size="14.0" />
                            </font>
-                        </Button>
+                        </TextField>
                      </children>
                   </VBox>
-               </children>
-            </GridPane>
+               </items>
+            </SplitPane>
          </center>
       </BorderPane>
    </children>

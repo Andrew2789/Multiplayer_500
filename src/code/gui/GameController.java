@@ -16,11 +16,9 @@ import javafx.fxml.Initializable;
 import javafx.geometry.HPos;
 import javafx.geometry.Orientation;
 import javafx.geometry.VPos;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
-import javafx.scene.control.Separator;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
@@ -34,13 +32,19 @@ public class GameController implements Initializable {
     @FXML
     private Pane gridSize, cardHeight;
     @FXML
-    private Label roundInfoLabel, turnLabel, resultsLabel, dragGuideLabel;
+    private Label roundInfoLabel, turnLabel, trickResultsLabel, roundResultsLabel, dragGuideLabel;
     @FXML
     private ListView<String> roundOrderList;
     @FXML
     private Button continueButton;
     @FXML
     private BorderPane dragGuide;
+    @FXML
+    private SplitPane middleContainer;
+    @FXML
+    private TextField chatTextField;
+    @FXML
+    private TextArea chatTextArea;
 
     private Map<Card, Image> cardImages = new HashMap<>();
     private List<CardView> trickView = new ArrayList<>();
@@ -120,11 +124,13 @@ public class GameController implements Initializable {
             if (playableCards != null) {
                 playing = true;
                 turnLabel.setText("Your turn");
+                roundResultsLabel.setVisible(false);
                 updateHand(players.get(selfIndex).getHand(), playableCards);
             } else {
                 playing = false;
                 if (currentPlayer != -1) {
                     turnLabel.setText(players.get(currentPlayer).getName() + "'s turn");
+                    roundResultsLabel.setVisible(false);
                 }
                 for (CardView cardView: handView) {
                     cardView.setOpacity(0.7);
@@ -152,31 +158,34 @@ public class GameController implements Initializable {
             for (CardView cardView: handView) {
                 cardView.setOpacity(0.7);
             }
-            resultsLabel.setText(winner.getName() + " won the trick.");
-            resultsLabel.setVisible(true);
+            trickResultsLabel.setText(winner.getName() + " won the trick.");
+            trickResultsLabel.setVisible(true);
             continueButton.setVisible(true);
         });
     }
 
-    public void setRoundResults(Bid bid, boolean won, int bidWinnder, int trickPoints, List<Player> players) {
+    public void setRoundResults(Bid bid, boolean won, int bidWinner, int trickPoints, List<Player> players) {
         Platform.runLater(() -> {
-            int playingTeam = bidWinnder % 2,
-                opposingTeam = (bidWinnder + 1) % 2,
+            updateTrick(new ArrayList<>(), new ArrayList<>());
+            int playingTeam = bidWinner % 2,
+                opposingTeam = (bidWinner + 1) % 2,
                 points = won ? bid.getPoints() : -bid.getPoints();
             String roundResult = won ? "achieved" : "failed to achieve";
-            resultsLabel.setText(String.format("Team %d (%s & %s) %s their bid of %s, earning %d points.\n"
+            roundResultsLabel.setText(String.format("Team %d (%s & %s) %s their bid of %s, earning %d points.\n"
                 + "Team %d (%s & %s) gained %d pts from winning tricks.",
-                playingTeam, players.get(playingTeam).getName(), players.get(playingTeam + 2).getName(), roundResult, bid.toDisplayString(), points,
-                opposingTeam, players.get(opposingTeam).getName(), players.get(opposingTeam + 2).getName(), trickPoints));
-            resultsLabel.setVisible(true);
+                playingTeam + 1, players.get(playingTeam).getName(), players.get(playingTeam + 2).getName(), roundResult, bid.toDisplayString(), points,
+                opposingTeam + 1, players.get(opposingTeam).getName(), players.get(opposingTeam + 2).getName(), trickPoints));
+            roundResultsLabel.setVisible(true);
             continueButton.setVisible(true);
         });
     }
 
     public void continueClicked() {
-        resultsLabel.setVisible(false);
+        trickResultsLabel.setVisible(false);
         continueButton.setVisible(false);
         turnLabel.setText("Waiting for other players to continue...");
+        roundResultsLabel.setText("Waiting for other players to continue...");
+        roundResultsLabel.setVisible(true);
         Main.gameClient.readyToContinue();
     }
 
@@ -229,11 +238,29 @@ public class GameController implements Initializable {
     }
 
     private boolean isInTrickRegion(double x, double y) {
-        double trickX = 10 + playedCardsPane.getLayoutX() + dragGuide.getLayoutX();
-        double trickY = 10 + playedCardsPane.getLayoutY() + dragGuide.getLayoutY();
+        double trickX = 10 + middleContainer.getLayoutX() + dragGuide.getLayoutX();
+        double trickY = 10 + middleContainer.getLayoutY() + dragGuide.getLayoutY();
         return (
             x >= trickX && x < trickX + dragGuide.getWidth() &&
             y >= trickY && y < trickY + dragGuide.getHeight());
+    }
+
+    public void addChatMessage(String name, String message) {
+        Platform.runLater(() -> {
+            String chatString = String.format("%s: %s", name, message);
+            if (chatTextArea.getText().isEmpty()) {
+                chatTextArea.setText(chatString);
+            } else {
+                chatTextArea.setText(chatTextArea.getText() + "\n" + chatString);
+            }
+        });
+    }
+
+    private void submitChatMessage() {
+        if (!chatTextField.getText().isEmpty()) {
+            Main.gameClient.submitChatMessage(chatTextField.getText());
+            chatTextField.setText("");
+        }
     }
 
     @Override
@@ -247,6 +274,12 @@ public class GameController implements Initializable {
             predictors.add(predictor);
         }
         GridPane.setHalignment(predictors.get(0), HPos.RIGHT);
+
+        chatTextField.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER) {
+                submitChatMessage();
+            }
+        });
 
         //Load card images
         final char[] suits = {'s', 'c', 'd', 'h'};

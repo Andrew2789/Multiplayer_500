@@ -38,13 +38,18 @@
 }
 
 
-.text-field {
+.text-field,
+.text-area {
 	-fx-background-color: #2b506e;
 	-fx-text-fill: #edf3f8;
 	-fx-prompt-text-fill: #b6cee2;
 }
 .text-field:focused {
 	-fx-background-color: #325d81;
+}
+
+.text-area {
+    -fx-control-inner-background: #2b506e;
 }
 
 

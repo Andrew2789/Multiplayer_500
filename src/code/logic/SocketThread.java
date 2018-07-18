@@ -169,9 +169,6 @@ public abstract class SocketThread extends Thread {
 				out = in.readUTF();
 			} catch (SocketTimeoutException e) {
 			}
-			if (exit) {
-			    return null;
-            }
 		}
 		return out;
 	}
@@ -183,9 +180,6 @@ public abstract class SocketThread extends Thread {
 				out = in.readInt();
 			} catch (SocketTimeoutException e) {
 			}
-            if (exit) {
-                return -1;
-            }
 		}
 		return out;
 	}
@@ -197,9 +191,6 @@ public abstract class SocketThread extends Thread {
 				out = in.readBoolean();
 			} catch (SocketTimeoutException e) {
 			}
-            if (exit) {
-                return false;
-            }
 		}
 		return out;
 	}
