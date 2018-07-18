@@ -30,7 +30,7 @@ public class GameController implements Initializable {
     @FXML
     private GridPane cardPane, playedCardsPane;
     @FXML
-    private Pane gridSize, cardHeight;
+    private Pane cardSize, gridSize, cardHeight;
     @FXML
     private Label roundInfoLabel, turnLabel, trickResultsLabel, roundResultsLabel, dragGuideLabel;
     @FXML
@@ -192,7 +192,7 @@ public class GameController implements Initializable {
     private int getNewCardIndex(double sceneX) {
         int index = 0;
         while (index < handView.size() && handView.get(index).isVisible()) {
-            if (sceneX - gridSize.getWidth() * 0.5 - (10 + (gridSize.getWidth()+2)*index) <= 0) {
+            if (sceneX - cardSize.getWidth() * 0.5 - (10 + (cardSize.getWidth()+2)*index) <= 0) {
                 return index;
             }
             index++;
@@ -296,14 +296,14 @@ public class GameController implements Initializable {
             CardView card = new CardView();
             card.setPreserveRatio(true);
             card.setSmooth(true);
-            card.fitWidthProperty().bind(gridSize.widthProperty());
+            card.fitWidthProperty().bind(cardSize.widthProperty());
             GridPane.setHalignment(card, HPos.CENTER);
             card.setOnMousePressed(mouseEvent -> {
                 if (beingDragged == null && card.isVisible()) {
                     beingDragged = card;
                     cardPane.getChildren().remove(card);
                     mainPane.getChildren().add(card);
-                    AnchorPane.setLeftAnchor(card, mouseEvent.getSceneX() - gridSize.getWidth() * 0.5);
+                    AnchorPane.setLeftAnchor(card, mouseEvent.getSceneX() - cardSize.getWidth() * 0.5);
                     AnchorPane.setTopAnchor(card, mouseEvent.getSceneY() - cardHeight.getWidth() * 0.5);
 
                     adjustPredictors(handView.indexOf(card), card);
@@ -316,7 +316,7 @@ public class GameController implements Initializable {
             });
             card.setOnMouseDragged(mouseEvent -> {
                 if (beingDragged == card) {
-                    AnchorPane.setLeftAnchor(card, mouseEvent.getSceneX() - gridSize.getWidth() * 0.5);
+                    AnchorPane.setLeftAnchor(card, mouseEvent.getSceneX() - cardSize.getWidth() * 0.5);
                     AnchorPane.setTopAnchor(card, mouseEvent.getSceneY() - cardHeight.getWidth() * 0.5);
 
                     if (!playing || card.getOpacity() < 0.9) {
@@ -353,7 +353,7 @@ public class GameController implements Initializable {
             CardView card = new CardView();
             card.setPreserveRatio(true);
             card.setSmooth(true);
-            card.fitWidthProperty().bind(gridSize.widthProperty());
+            card.fitWidthProperty().bind(cardSize.widthProperty());
             playedCardsPane.add(card, i, 1);
             Label label = new Label();
             GridPane.setHalignment(label, HPos.CENTER);
