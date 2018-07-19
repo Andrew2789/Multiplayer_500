@@ -5,24 +5,24 @@ import code.game.Card;
 import code.network.Main;
 import code.game.Player;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.ResourceBundle;
+import java.util.*;
+
 import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.HPos;
 import javafx.geometry.Orientation;
 import javafx.geometry.VPos;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
+import javafx.util.Callback;
 
 public class GameController implements Initializable {
     @FXML
@@ -30,9 +30,9 @@ public class GameController implements Initializable {
     @FXML
     private GridPane cardPane, playedCardsPane;
     @FXML
-    private Pane cardSize, gridSize, cardHeight;
+    private Pane cardSize, cardHeight;
     @FXML
-    private Label roundInfoLabel, turnLabel, trickResultsLabel, roundResultsLabel, dragGuideLabel;
+    private Label roundInfoLabel, turnLabel, trickResultsLabel, roundResultsLabel;
     @FXML
     private ListView<String> roundOrderList;
     @FXML
@@ -45,6 +45,8 @@ public class GameController implements Initializable {
     private TextField chatTextField;
     @FXML
     private TextArea chatTextArea;
+    @FXML
+    private TableView<Integer> biddingTable;
 
     private Map<Card, Image> cardImages = new HashMap<>();
     private List<CardView> trickView = new ArrayList<>();
@@ -173,7 +175,7 @@ public class GameController implements Initializable {
             String roundResult = won ? "achieved" : "failed to achieve";
             roundResultsLabel.setText(String.format("Team %d (%s & %s) %s their bid of %s, earning %d points.\n"
                 + "Team %d (%s & %s) gained %d pts from winning tricks.",
-                playingTeam + 1, players.get(playingTeam).getName(), players.get(playingTeam + 2).getName(), roundResult, bid.toDisplayString(), points,
+                playingTeam + 1, players.get(playingTeam).getName(), players.get(playingTeam + 2).getName(), roundResult, bid.toWordString(), points,
                 opposingTeam + 1, players.get(opposingTeam).getName(), players.get(opposingTeam + 2).getName(), trickPoints));
             roundResultsLabel.setVisible(true);
             continueButton.setVisible(true);
@@ -266,6 +268,17 @@ public class GameController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         Main.setGameController(this);
 
+        //Load card images
+        List<Character> suits = new ArrayList<>(Arrays.asList('s', 'c', 'd', 'h'));
+        for (char suit: suits) {
+            for (int val = 1; val < 14; val++) {
+                Card card = new Card(suit, val);
+                cardImages.put(card, new Image(getClass().getResourceAsStream(String.format("/resources/images/cards/%s.png", card))));
+            }
+        }
+        Card joker = new Card('j', 0);
+        cardImages.put(joker, new Image(getClass().getResourceAsStream(String.format("/resources/images/cards/%s.png", joker))));
+
         for (int i = 0; i < 2; i++) {
             Separator predictor = new Separator();
             predictor.setOrientation(Orientation.VERTICAL);
@@ -281,16 +294,46 @@ public class GameController implements Initializable {
             }
         });
 
-        //Load card images
-        final char[] suits = {'s', 'c', 'd', 'h'};
+        suits.add('n');
         for (char suit: suits) {
-            for (int val = 1; val < 14; val++) {
-                Card card = new Card(suit, val);
-                cardImages.put(card, new Image(getClass().getResourceAsStream(String.format("/resources/images/cards/%s.png", card))));
-            }
+            TableColumn<Integer, String> testCol = new TableColumn<>();
+            testCol.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(new Bid(param.getValue(), suit).toSymbolString()));
+            biddingTable.getColumns().add(testCol);
         }
-        Card joker = new Card('j', 0);
-        cardImages.put(joker, new Image(getClass().getResourceAsStream(String.format("/resources/images/cards/%s.png", joker))));
+        for (int i = 6; i <= 10; i++) {
+            biddingTable.getItems().add(i);
+        }
+
+        /*biddingTable.setRowFactory(new Callback<TableView<String>, TableRow<String>>() {
+            @Override
+            public TableRow<String> call(TableView<String> tableView) {
+                final TableRow<String> row = new TableRow<String>() {
+                    @Override
+                    public void updateItem(WaitingListItem item, boolean empty) {
+                        super.updateItem(item, empty);
+                        getStyleClass().remove("highlighted-row");
+                        setTooltip(null);
+                        if (item != null && !empty) {
+                            if (SearchUtils.getUserById(item.getUserId()).getOrgans().contains(item.getOrganType())) {
+                                setTooltip(new Tooltip("User is currently donating this organ"));
+                                if (!getStyleClass().contains("highlighted-row")) {
+                                    getStyleClass().add("highlighted-row");
+                                }
+
+                            }
+                        }
+                    }
+                };
+                //event to open receiver profile when clicked
+                row.setOnMouseClicked(event -> {
+                    if (!row.isEmpty() && event.getClickCount() == 2) {
+                        WindowManager.newCliniciansUserWindow(SearchUtils.getUserById(row.getItem().getUserId()));
+                    }
+                });
+                transplantTable.refresh();
+                return row;
+            }
+        });*/
 
         for (int i = 0; i < handSize; i++) {
             CardView card = new CardView();

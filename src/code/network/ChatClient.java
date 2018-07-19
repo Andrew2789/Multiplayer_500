@@ -24,6 +24,14 @@ public class ChatClient extends SocketThread {
         synchronized (messageQueue) {
             messageQueue.add(name + ": " + message);
         }
+        displayMessage(name + ": " + message);
+    }
+
+    private void displayMessage(String message) {
+        gameController.addChatMessage(message);
+        if (Main.gameServer != null) {
+            Main.gameSetupController.addChatMessage(message);
+        }
     }
 
     @Override
@@ -49,10 +57,7 @@ public class ChatClient extends SocketThread {
             }
             try {
                 String newMessage = in.readUTF();
-                gameController.addChatMessage(newMessage);
-                if (Main.gameServer != null) {
-                    Main.gameSetupController.addChatMessage(newMessage);
-                }
+                displayMessage(newMessage);
             } catch (SocketTimeoutException e) {
             }
         }

@@ -26,7 +26,9 @@ public class ChatServer extends SocketThread {
                     try {
                         String message = clientSocket.in.readUTF();
                         for (ClientSocket outSocket: clientSockets) {
-                            outSocket.out.writeUTF(message);
+                            if (outSocket != clientSocket) {
+                                outSocket.out.writeUTF(message);
+                            }
                         }
                     } catch (SocketTimeoutException e) {
                     }

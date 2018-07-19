@@ -116,9 +116,40 @@
 	-fx-background-color: #1d3549;
 }
 
-.list-view {
-	-fx-background-color: #396a93;
+
+.table-view .column-header .label {
+    -fx-text-fill: #000000;
+    -fx-font-weight: bold;
 }
+
+.table-view .column-header-background,
+.table-view .column-header-background > *,
+.table-view .column-header,
+.table-view .column-header .label,
+.table-view-row-cell {
+    -fx-background-color: #2b506e;
+    -fx-text-fill: white;
+}
+
+.table-view,
+.table-view .filler {
+    -fx-font-size: 14px;
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+    -fx-background-color: #396a93;
+    -fx-box-border: hidden;
+    -fx-background-radius: 0px;
+    -fx-background-insets: 0px;
+}
+
+.list-view,
+.list-view > .virtual-flow > .scroll-bar,
+.table-view > .virtual-flow > .scroll-bar,
+.list-view > .virtual-flow > .corner,
+.table-view > .virtual-flow > .corner {
+    -fx-background-color: #396a93;
+}
+
 
 .list-view:focused {
     -fx-background-color: #396a93, #396a93;
@@ -127,29 +158,22 @@
 }
 
 .list-view .virtual-flow .scroll-bar .thumb,
-.tree-view .virtual-flow .scroll-bar .thumb,
-.table-view .virtual-flow .scroll-bar .thumb,
-.tree-table-view .virtual-flow .scroll-bar .thumb {
+.table-view .virtual-flow .scroll-bar .thumb {
     -fx-background-color: #6c9dc6;
 }
 
 .list-cell,
-.table-cell,
-.tree-table-cell {
+.table-cell {
     -fx-text-fill: #edf3f8;
 }
 
 .list-view .list-cell,
-.tree-view .tree-cell,
-.table-row-cell,
-.tree-table-row-cell {
+.table-row-cell {
 	-fx-background-color: #396a93;
 	-fx-font-size: 14px
 }
 
 .list-view .list-cell:selected,
-.tree-view .tree-cell:selected,
-.table-row-cell:selected,
-.tree-table-row-cell:selected {
+.table-row-cell:selected {
     -fx-background-color: #4785b8;
 }

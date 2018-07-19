@@ -1,15 +1,19 @@
 package code.game;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Bid {
     private int tricks;
     private char trumpSuit;
+    private Map<Character, String> suitSymbols;
 
     public Bid(int tricks, char trumpSuit) {
         this.tricks = tricks;
         this.trumpSuit = trumpSuit;
+        initializeSuitSymbols();
     }
 
     public Bid(String bid) {
@@ -18,6 +22,16 @@ public class Bid {
         }
         this.trumpSuit = bid.charAt(0);
         this.tricks = Integer.parseInt(bid.substring(1));
+        initializeSuitSymbols();
+    }
+
+    private void initializeSuitSymbols() {
+        suitSymbols = new HashMap<>();
+        suitSymbols.put('s', "♠");
+        suitSymbols.put('c', "♣");
+        suitSymbols.put('d', "♦");
+        suitSymbols.put('h', "♥");
+        suitSymbols.put('n', "\uD83D\uDEAB");
     }
 
     public int getPoints() {
@@ -116,7 +130,7 @@ public class Bid {
         return Character.toString(trumpSuit) + tricks;
     }
 
-    public String toDisplayString() {
+    public String toWordString() {
         String suitName;
         switch (trumpSuit) {
             case 's':
@@ -144,5 +158,13 @@ public class Bid {
                     throw new IllegalStateException("Invalid trump suit.");
         }
         return String.format("%d %s", tricks, suitName);
+    }
+
+    public String toSymbolString() {
+        if (trumpSuit == 'm') {
+            return toWordString();
+        } else {
+            return Integer.toString(tricks) + suitSymbols.get(trumpSuit);
+        }
     }
 }
