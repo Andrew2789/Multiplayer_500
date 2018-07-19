@@ -294,11 +294,13 @@ public class GameController implements Initializable {
             }
         });
 
+        biddingTable.getSelectionModel().setCellSelectionEnabled(true);
         suits.add('n');
         for (char suit: suits) {
-            TableColumn<Integer, String> testCol = new TableColumn<>();
-            testCol.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(new Bid(param.getValue(), suit).toSymbolString()));
-            biddingTable.getColumns().add(testCol);
+            TableColumn<Integer, String> newColumn = new TableColumn<>();
+            newColumn.setStyle(newColumn.getStyle() + "; -fx-font-size: 16px;");
+            newColumn.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(new Bid(param.getValue(), suit).toSymbolString()));
+            biddingTable.getColumns().add(newColumn);
         }
         for (int i = 6; i <= 10; i++) {
             biddingTable.getItems().add(i);
