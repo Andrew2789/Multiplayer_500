@@ -298,7 +298,7 @@ public class GameController implements Initializable {
         suits.add('n');
         for (char suit: suits) {
             TableColumn<Integer, String> newColumn = new TableColumn<>();
-            newColumn.setStyle(newColumn.getStyle() + "; -fx-font-size: 16px;");
+            newColumn.setStyle(newColumn.getStyle() + "; -fx-font-size: 18px;");
             newColumn.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(new Bid(param.getValue(), suit).toSymbolString()));
             biddingTable.getColumns().add(newColumn);
         }

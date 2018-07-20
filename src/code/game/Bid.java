@@ -27,10 +27,10 @@ public class Bid {
 
     private void initializeSuitSymbols() {
         suitSymbols = new HashMap<>();
-        suitSymbols.put('s', "♠");
-        suitSymbols.put('c', "♣");
-        suitSymbols.put('d', "♦");
-        suitSymbols.put('h', "♥");
+        suitSymbols.put('s', "♤");
+        suitSymbols.put('c', "♧");
+        suitSymbols.put('d', "♢");
+        suitSymbols.put('h', "♡");
         suitSymbols.put('n', "\uD83D\uDEAB");
     }
 
