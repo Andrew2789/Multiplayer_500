@@ -14,7 +14,7 @@
 <?import javafx.scene.text.Font?>
 
 
-<SplitPane fx:id="mainPane" dividerPositions="0.65" prefHeight="400.0" prefWidth="800.0" stylesheets="@../css/gui.css" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="code.gui.GameSetupController">
+<SplitPane fx:id="mainPane" dividerPositions="0.65" prefHeight="400.0" prefWidth="800.0" stylesheets="@../css/gui.css" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml/1" fx:controller="code.gui.GameSetupController">
    <items>
       <GridPane maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" minHeight="200.0" minWidth="400.0" prefHeight="400.0" prefWidth="600.0">
         <columnConstraints>

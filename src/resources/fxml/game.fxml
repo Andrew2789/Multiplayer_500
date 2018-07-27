@@ -17,7 +17,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane fx:id="mainPane" minHeight="0.0" minWidth="0.0" prefHeight="600.0" prefWidth="800.0" stylesheets="@../css/gui.css" xmlns="http://javafx.com/javafx/9" xmlns:fx="http://javafx.com/fxml/1" fx:controller="code.gui.GameController">
+<AnchorPane fx:id="mainPane" minHeight="0.0" minWidth="0.0" prefHeight="600.0" prefWidth="800.0" stylesheets="@../css/gui.css" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml/1" fx:controller="code.gui.GameController">
    <children>
       <GridPane layoutX="10.0" layoutY="10.0" visible="false" AnchorPane.bottomAnchor="10.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
         <columnConstraints>
@@ -139,11 +139,16 @@
                                     <Insets bottom="10.0" left="10.0" right="10.0" />
                                  </VBox.margin>
                               </Label>
-                              <Button fx:id="continueButton" mnemonicParsing="false" onAction="#continueClicked" text="Continue" visible="false">
-                                 <font>
-                                    <Font size="14.0" />
-                                 </font>
-                              </Button>
+                               <Button fx:id="continueButton" mnemonicParsing="false" onAction="#continueClicked" text="Continue" visible="false">
+                                   <font>
+                                       <Font size="14.0" />
+                                   </font>
+                               </Button>
+                               <Button fx:id="bidButton" mnemonicParsing="false" onAction="#bidClicked" text="Place bid" visible="false">
+                                   <font>
+                                       <Font size="14.0" />
+                                   </font>
+                               </Button>
                            </children>
                         </VBox>
                         <Label fx:id="roundResultsLabel" text="\%s won the trick." visible="false" wrapText="true" GridPane.columnIndex="1" GridPane.columnSpan="4" GridPane.halignment="CENTER" GridPane.rowSpan="2">

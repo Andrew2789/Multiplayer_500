@@ -130,7 +130,7 @@ public class Bid {
         return Character.toString(trumpSuit) + tricks;
     }
 
-    public String toWordString() {
+    public String toWordString(boolean capitalised) {
         String suitName;
         switch (trumpSuit) {
             case 's':
@@ -150,9 +150,17 @@ public class Bid {
                 break;
             case 'm':
                 if (tricks == 0) {
-                    return "misere";
+                    if (capitalised) {
+                        return "Misere";
+                    } else {
+                        return "misere";
+                    }
                 } else {
-                    return "open misere";
+                    if (capitalised) {
+                        return "Open misere";
+                    } else {
+                        return "open misere";
+                    }
                 }
                 default:
                     throw new IllegalStateException("Invalid trump suit.");
@@ -162,7 +170,14 @@ public class Bid {
 
     public String toSymbolString() {
         if (trumpSuit == 'm') {
-            return toWordString();
+            switch (tricks) {
+                case 0:
+                    return "Misere";
+                case 1:
+                    return "OpenMsr";
+                    default:
+                        throw new IllegalStateException("Invalid number of misere tricks.");
+            }
         } else {
             return Integer.toString(tricks) + suitSymbols.get(trumpSuit);
         }

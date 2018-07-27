@@ -2,27 +2,26 @@ package code.gui;
 
 import code.game.Bid;
 import code.game.Card;
-import code.network.Main;
 import code.game.Player;
-import java.net.URL;
-import java.util.*;
-
+import code.network.Main;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.collections.ListChangeListener;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.HPos;
 import javafx.geometry.Orientation;
 import javafx.geometry.VPos;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
-import javafx.util.Callback;
+
+import java.net.URL;
+import java.util.*;
 
 public class GameController implements Initializable {
     @FXML
@@ -36,7 +35,7 @@ public class GameController implements Initializable {
     @FXML
     private ListView<String> roundOrderList;
     @FXML
-    private Button continueButton;
+    private Button continueButton, bidButton;
     @FXML
     private BorderPane dragGuide;
     @FXML
@@ -58,6 +57,7 @@ public class GameController implements Initializable {
     private List<Separator> predictors = new ArrayList<>();
 
     private CardView beingDragged = null;
+    private Bid bidSelected = null;
 
     private int trickSize = 4, handSize = 10;
 
@@ -175,7 +175,7 @@ public class GameController implements Initializable {
             String roundResult = won ? "achieved" : "failed to achieve";
             roundResultsLabel.setText(String.format("Team %d (%s & %s) %s their bid of %s, earning %d points.\n"
                 + "Team %d (%s & %s) gained %d pts from winning tricks.",
-                playingTeam + 1, players.get(playingTeam).getName(), players.get(playingTeam + 2).getName(), roundResult, bid.toWordString(), points,
+                playingTeam + 1, players.get(playingTeam).getName(), players.get(playingTeam + 2).getName(), roundResult, bid.toWordString(false), points,
                 opposingTeam + 1, players.get(opposingTeam).getName(), players.get(opposingTeam + 2).getName(), trickPoints));
             roundResultsLabel.setVisible(true);
             continueButton.setVisible(true);
@@ -264,6 +264,13 @@ public class GameController implements Initializable {
         }
     }
 
+    public void bidClicked() {
+        System.out.println(bidSelected.toWordString(true));
+        bidSelected = null;
+        bidButton.setVisible(false);
+        trickResultsLabel.setVisible(false);
+    }
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         Main.setGameController(this);
@@ -302,40 +309,54 @@ public class GameController implements Initializable {
             newColumn.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(new Bid(param.getValue(), suit).toSymbolString()));
             biddingTable.getColumns().add(newColumn);
         }
+        TableColumn<Integer, String> misereColumn = new TableColumn<>();
+        misereColumn.setStyle(misereColumn.getStyle() + "; -fx-font-size: 18px;");
+        misereColumn.setCellValueFactory(param -> {
+            switch (param.getValue()) {
+                case 7:
+                    return new ReadOnlyObjectWrapper<>(new Bid(0, 'm').toSymbolString());
+                case 9:
+                    return new ReadOnlyObjectWrapper<>(new Bid(1, 'm').toSymbolString());
+                    default:
+                        return new ReadOnlyObjectWrapper<>("");
+            }
+
+        });
+        biddingTable.getColumns().add(misereColumn);
         for (int i = 6; i <= 10; i++) {
             biddingTable.getItems().add(i);
         }
 
-        /*biddingTable.setRowFactory(new Callback<TableView<String>, TableRow<String>>() {
-            @Override
-            public TableRow<String> call(TableView<String> tableView) {
-                final TableRow<String> row = new TableRow<String>() {
-                    @Override
-                    public void updateItem(WaitingListItem item, boolean empty) {
-                        super.updateItem(item, empty);
-                        getStyleClass().remove("highlighted-row");
-                        setTooltip(null);
-                        if (item != null && !empty) {
-                            if (SearchUtils.getUserById(item.getUserId()).getOrgans().contains(item.getOrganType())) {
-                                setTooltip(new Tooltip("User is currently donating this organ"));
-                                if (!getStyleClass().contains("highlighted-row")) {
-                                    getStyleClass().add("highlighted-row");
-                                }
-
-                            }
-                        }
+        biddingTable.getSelectionModel().getSelectedCells().addListener((ListChangeListener<TablePosition>) c -> {
+            if (c.getList().size() > 0) {
+                TablePosition selectedCell = c.getList().get(0);
+                int colIndex = biddingTable.getColumns().indexOf(selectedCell.getTableColumn());
+                int rowIndex = selectedCell.getRow();
+                Bid selected;
+                if (colIndex < 5) {
+                    selected = new Bid(rowIndex + 6, suits.get(colIndex));
+                } else {
+                    switch (rowIndex) {
+                        case 1:
+                            selected = new Bid(0, 'm');
+                            break;
+                        case 3:
+                            selected = new Bid(1, 'm');
+                            break;
+                        default:
+                            trickResultsLabel.setVisible(false);
+                            bidButton.setVisible(false);
+                            bidSelected = null;
+                            Platform.runLater(() -> biddingTable.getSelectionModel().clearSelection());
+                            return;
                     }
-                };
-                //event to open receiver profile when clicked
-                row.setOnMouseClicked(event -> {
-                    if (!row.isEmpty() && event.getClickCount() == 2) {
-                        WindowManager.newCliniciansUserWindow(SearchUtils.getUserById(row.getItem().getUserId()));
-                    }
-                });
-                transplantTable.refresh();
-                return row;
+                }
+                trickResultsLabel.setVisible(true);
+                bidButton.setVisible(true);
+                bidSelected = selected;
+                trickResultsLabel.setText(selected.toWordString(true));
             }
-        });*/
+        });
 
         for (int i = 0; i < handSize; i++) {
             CardView card = new CardView();
