@@ -267,6 +267,7 @@ public class GameController implements Initializable {
     public void bidClicked() {
         System.out.println(bidSelected.toWordString(true));
         bidSelected = null;
+        biddingTable.setVisible(false);
         bidButton.setVisible(false);
         trickResultsLabel.setVisible(false);
     }
@@ -286,6 +287,7 @@ public class GameController implements Initializable {
         Card joker = new Card('j', 0);
         cardImages.put(joker, new Image(getClass().getResourceAsStream(String.format("/resources/images/cards/%s.png", joker))));
 
+        //Initialise card position predictors
         for (int i = 0; i < 2; i++) {
             Separator predictor = new Separator();
             predictor.setOrientation(Orientation.VERTICAL);

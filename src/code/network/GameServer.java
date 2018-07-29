@@ -12,7 +12,6 @@ import java.util.List;
 public class GameServer extends SocketThread {
     private Game game;
     private boolean teamsSet = false;
-    private ChatServer chatServer;
 
     public GameServer(int port, int players, Runnable onFail, Runnable onSuccess, Runnable onServerConnected, Runnable onDisconnect) {
         super(port, players, onFail, onSuccess, onServerConnected, onDisconnect);
@@ -48,7 +47,8 @@ public class GameServer extends SocketThread {
     @Override
     void afterConnection() throws IOException, InterruptedException {
         System.out.println("Server started");
-        chatServer = new ChatServer(() -> {});
+        ChatServer chatServer = new ChatServer(() -> {
+        });
         Main.setChatServer(chatServer);
         chatServer.start();
         List<Player> players = new ArrayList<>();
