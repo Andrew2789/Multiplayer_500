@@ -1,20 +1,20 @@
 package code.game;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class Game {
     private List<Player> players;
+    private GameState gameState;
+
+    private Bid bid;
+    private int bidWinner;
+
     private List<Card> kitty = new ArrayList<>();
     private List<Card> trick = new ArrayList<>();
     private List<Player> trickPlayers = new ArrayList<>();
     private List<Integer> tricksWon = new ArrayList<>();
-    private Bid bid;
-    private int bidWinner, roundNumber;
-    private boolean trumpsPlayed;
-    private GameState gameState;
+    private int roundNumber;
+    private Map<BidType, Boolean> suitsPlayed;
 
     public Game(List<Player> players) {
         this.players = players;
@@ -58,7 +58,10 @@ public class Game {
 
     public void hostDealt() {
         tricksWon = new ArrayList<>(Arrays.asList(0, 0));
-        trumpsPlayed = false;
+        suitsPlayed = new HashMap<>();
+        for (BidType suit: BidType.getTrumpSuits()) {
+            suitsPlayed.put(suit, false);
+        }
         roundNumber++;
     }
 
@@ -69,9 +72,7 @@ public class Game {
             trick.add(card);
         }
         trickPlayers.add(getPlayer(playerIndex));
-        if (card.getSuit() == bid.getType()) {
-            trumpsPlayed = true;
-        }
+        suitsPlayed.put(bid.getType().getSuitInBid(card), true);
     }
 
     public Player findTrickWinner() {
@@ -157,7 +158,7 @@ public class Game {
     }
 
     public boolean getTrumpsPlayed() {
-        return trumpsPlayed;
+        return suitsPlayed.get(bid.getType());
     }
 
     public int getRoundNumber() {

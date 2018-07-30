@@ -100,6 +100,16 @@ public enum BidType {
         }
     }
 
+    public BidType getSuitInBid(Card toCheck) {
+        if (this == NO_TRUMPS || this == MISERE) {
+            return toCheck.getSuit();
+        } else if (isLeftBower(toCheck) || toCheck.getSuit() == NO_TRUMPS) {
+            return this;
+        } else {
+            return toCheck.getSuit();
+        }
+    }
+
     public char getChar() {
         return bidChar;
     }
