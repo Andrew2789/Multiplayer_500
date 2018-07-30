@@ -1,6 +1,7 @@
 package code.gui;
 
 import code.game.Bid;
+import code.game.BidType;
 import code.game.Card;
 import code.game.Player;
 import code.network.Main;
@@ -272,40 +273,11 @@ public class GameController implements Initializable {
         trickResultsLabel.setVisible(false);
     }
 
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
-        Main.setGameController(this);
-
-        //Load card images
-        List<Character> suits = new ArrayList<>(Arrays.asList('s', 'c', 'd', 'h'));
-        for (char suit: suits) {
-            for (int val = 1; val < 14; val++) {
-                Card card = new Card(suit, val);
-                cardImages.put(card, new Image(getClass().getResourceAsStream(String.format("/resources/images/cards/%s.png", card))));
-            }
-        }
-        Card joker = new Card('j', 0);
-        cardImages.put(joker, new Image(getClass().getResourceAsStream(String.format("/resources/images/cards/%s.png", joker))));
-
-        //Initialise card position predictors
-        for (int i = 0; i < 2; i++) {
-            Separator predictor = new Separator();
-            predictor.setOrientation(Orientation.VERTICAL);
-            predictor.setVisible(false);
-            predictors.add(predictor);
-        }
-        GridPane.setHalignment(predictors.get(0), HPos.RIGHT);
-
-        chatTextArea.textProperty().addListener((observable, oldValue, newValue) -> chatTextArea.setScrollTop(Double.MAX_VALUE));
-        chatTextField.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.ENTER) {
-                submitChatMessage();
-            }
-        });
+    private void setupBiddingTable() {
+        BidType[] suits = BidType.getSuits();
 
         biddingTable.getSelectionModel().setCellSelectionEnabled(true);
-        suits.add('n');
-        for (char suit: suits) {
+        for (BidType suit: suits) {
             TableColumn<Integer, String> newColumn = new TableColumn<>();
             newColumn.setStyle(newColumn.getStyle() + "; -fx-font-size: 18px;");
             newColumn.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(new Bid(param.getValue(), suit).toSymbolString()));
@@ -316,11 +288,11 @@ public class GameController implements Initializable {
         misereColumn.setCellValueFactory(param -> {
             switch (param.getValue()) {
                 case 7:
-                    return new ReadOnlyObjectWrapper<>(new Bid(0, 'm').toSymbolString());
+                    return new ReadOnlyObjectWrapper<>(new Bid(0, BidType.MISERE).toSymbolString());
                 case 9:
-                    return new ReadOnlyObjectWrapper<>(new Bid(1, 'm').toSymbolString());
-                    default:
-                        return new ReadOnlyObjectWrapper<>("");
+                    return new ReadOnlyObjectWrapper<>(new Bid(1, BidType.MISERE).toSymbolString());
+                default:
+                    return new ReadOnlyObjectWrapper<>("");
             }
 
         });
@@ -336,14 +308,14 @@ public class GameController implements Initializable {
                 int rowIndex = selectedCell.getRow();
                 Bid selected;
                 if (colIndex < 5) {
-                    selected = new Bid(rowIndex + 6, suits.get(colIndex));
+                    selected = new Bid(rowIndex + 6, suits[colIndex]);
                 } else {
                     switch (rowIndex) {
                         case 1:
-                            selected = new Bid(0, 'm');
+                            selected = new Bid(0, BidType.MISERE);
                             break;
                         case 3:
-                            selected = new Bid(1, 'm');
+                            selected = new Bid(1, BidType.MISERE);
                             break;
                         default:
                             trickResultsLabel.setVisible(false);
@@ -359,6 +331,17 @@ public class GameController implements Initializable {
                 trickResultsLabel.setText(selected.toWordString(true));
             }
         });
+    }
+
+    private void setupCardViews() {
+        //Initialise card position predictors
+        for (int i = 0; i < 2; i++) {
+            Separator predictor = new Separator();
+            predictor.setOrientation(Orientation.VERTICAL);
+            predictor.setVisible(false);
+            predictors.add(predictor);
+        }
+        GridPane.setHalignment(predictors.get(0), HPos.RIGHT);
 
         for (int i = 0; i < handSize; i++) {
             CardView card = new CardView();
@@ -431,5 +414,31 @@ public class GameController implements Initializable {
             trickView.add(card);
             trickLabels.add(label);
         }
+    }
+
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        Main.setGameController(this);
+
+        //Load card images
+        for (BidType suit: BidType.getTrumpSuits()) {
+            for (int val = 1; val < 14; val++) {
+                Card card = new Card(suit, val);
+                cardImages.put(card, new Image(getClass().getResourceAsStream(String.format("/resources/images/cards/%s.png", card))));
+            }
+        }
+        Card joker = new Card(BidType.NO_TRUMPS, 0);
+        cardImages.put(joker, new Image(getClass().getResourceAsStream(String.format("/resources/images/cards/%s.png", joker))));
+
+
+        chatTextArea.textProperty().addListener((observable, oldValue, newValue) -> chatTextArea.setScrollTop(Double.MAX_VALUE));
+        chatTextField.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ENTER) {
+                submitChatMessage();
+            }
+        });
+
+        setupBiddingTable();
+        setupCardViews();
     }
 }

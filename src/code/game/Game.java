@@ -14,9 +14,11 @@ public class Game {
     private Bid bid;
     private int bidWinner, roundNumber;
     private boolean trumpsPlayed;
+    private GameState gameState;
 
     public Game(List<Player> players) {
         this.players = players;
+        this.gameState = GameState.SETUP;
     }
 
     public void setBid(Bid bid, int startingPlayer) {
@@ -67,7 +69,7 @@ public class Game {
             trick.add(card);
         }
         trickPlayers.add(getPlayer(playerIndex));
-        if (card.getSuit() == bid.getTrumpSuit()) {
+        if (card.getSuit() == bid.getType()) {
             trumpsPlayed = true;
         }
     }
@@ -75,7 +77,7 @@ public class Game {
     public Player findTrickWinner() {
         List<Integer> scores = new ArrayList<>();
         for (Card card: trick) {
-            scores.add(bid.valueOf(card, getLeadingSuit()));
+            scores.add(bid.getType().valueOf(card, getLeadingSuit()));
         }
         int maxIndex = scores.indexOf(Collections.max(scores));
         Player winningPlayer = trickPlayers.get(maxIndex);
@@ -102,43 +104,32 @@ public class Game {
 
     private List<Card> createDeck() {
         List<Card> deck = new ArrayList<>();
-        char[] suits = {'s', 'c', 'd', 'h'};
-        deck.add(new Card('c', 4));
-        deck.add(new Card('s', 4));
-        for (char suit: suits) {
+        BidType[] suits = BidType.getTrumpSuits();
+        deck.add(new Card(BidType.CLUBS, 4));
+        deck.add(new Card(BidType.SPADES, 4));
+        for (BidType suit: suits) {
             for (int val = 5; val < 14; val++) {
                 deck.add(new Card(suit, val));
             }
         }
-        for (char suit: suits) {
+        for (BidType suit: suits) {
             deck.add(new Card(suit, 1));
         }
-        deck.add(new Card('j', 0));
+        deck.add(new Card(BidType.NO_TRUMPS, 0));
         return deck;
     }
 
-    public Character getLeadingSuit() {
+    public BidType getLeadingSuit() {
         if (trick.size() == 0) {
             return null;
-        } else if (bid.isLeftBower(trick.get(0))) {
-            switch (trick.get(0).getSuit()) {
-                case 'c':
-                    return 's';
-                case 's':
-                    return 'c';
-                case 'd':
-                    return 'h';
-                case 'h':
-                    return 'd';
-                    default:
-                        throw new IllegalStateException("Found left bower but did not have a legal suit.");
-            }
-        } else if (trick.get(0).getSuit() == 'j') {
-            if (bid.getTrumpSuit() == 'm' || bid.getTrumpSuit() == 'n') {
+        } else if (bid.getType().isLeftBower(trick.get(0))) {
+            return trick.get(0).getSuit().getOffsuit();
+        } else if (trick.get(0).getSuit() == BidType.NO_TRUMPS) {
+            if (bid.getType() == BidType.MISERE || bid.getType() == BidType.NO_TRUMPS) {
                 //scream TODO fix this
-                return 'c';
+                return BidType.CLUBS;
             } else {
-                return bid.getTrumpSuit();
+                return bid.getType();
             }
         } else {
             return trick.get(0).getSuit();

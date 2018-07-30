@@ -1,10 +1,10 @@
 package code.game;
 
 public class Card {
-    private char suit;
+    private BidType suit;
     private int val;
 
-    public Card(char suit, int val) {
+    public Card(BidType suit, int val) {
         this.suit = suit;
         this.val = val;
     }
@@ -13,11 +13,11 @@ public class Card {
         if (card == null || card.length() < 2) {
             throw new IllegalArgumentException();
         }
-        this.suit = card.charAt(0);
+        this.suit = BidType.fromChar(card.charAt(0));
         this.val = Integer.parseInt(card.substring(1));
     }
 
-    public char getSuit() {
+    public BidType getSuit() {
         return suit;
     }
 
@@ -38,16 +38,16 @@ public class Card {
     public int hashCode() {
         int hashCode = val;
         switch (suit) {
-            case 's':
+            case SPADES:
                 hashCode += 1 << 4;
                 break;
-            case 'c':
+            case CLUBS:
                 hashCode += 2 << 4;
                 break;
-            case 'd':
+            case DIAMONDS:
                 hashCode += 3 << 4;
                 break;
-            case 'h':
+            case HEARTS:
                 hashCode += 4 << 4;
                 break;
         }
@@ -55,6 +55,6 @@ public class Card {
     }
 
     public String toString() {
-        return Character.toString(suit) + val;
+        return Character.toString(suit.getChar()) + val;
     }
 }

@@ -38,7 +38,7 @@ public class GameClient extends SocketThread {
     public void moveCard(int oldIndex, int newIndex) {
         game.getPlayer(playerIndex).moveCard(oldIndex, newIndex);
         if (playing) {
-            gameController.updateHand(game.getPlayer(playerIndex).getHand(), game.getBid().filterPlayable(game.getPlayer(playerIndex).getHand(), game.getTrumpsPlayed(), game.getLeadingSuit()));
+            gameController.updateHand(game.getPlayer(playerIndex).getHand(), game.getBid().getType().filterPlayable(game.getPlayer(playerIndex).getHand(), game.getTrumpsPlayed(), game.getLeadingSuit()));
         } else {
             gameController.updateHand(game.getPlayer(playerIndex).getHand(), null);
         }
@@ -146,7 +146,7 @@ public class GameClient extends SocketThread {
             playing = false;
             if (playerTurn == playerIndex) {
                 gameController.setPlayerTurn(game.getPlayers(),
-                        game.getBid().filterPlayable(game.getPlayer(playerTurn).getHand(), game.getTrumpsPlayed(), game.getLeadingSuit()),
+                        game.getBid().getType().filterPlayable(game.getPlayer(playerTurn).getHand(), game.getTrumpsPlayed(), game.getLeadingSuit()),
                         playerIndex, playerTurn);
                 playing = true;
                 while (playing) {

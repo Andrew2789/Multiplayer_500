@@ -1,9 +1,7 @@
 package code.network;
 
-import code.game.Bid;
-import code.game.Card;
-import code.game.Game;
-import code.game.Player;
+import code.game.*;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -127,7 +125,9 @@ public class GameServer extends SocketThread {
             sendCardList(clientSockets.get(i).out, game.getPlayer(i).getHand());
         }
 
-        game.setBid(new Bid(8, 'd'), 2);
+
+        game.setBid(new Bid(8, BidType.DIAMONDS), 2);
+
         for (ClientSocket clientSocket: clientSockets) {
             clientSocket.out.writeUTF(game.getBid().toString());
         }
@@ -149,7 +149,7 @@ public class GameServer extends SocketThread {
 
     private int playTrick(int startingPlayer) throws IOException {
         int cardsPlayed = 0;
-        Character leadingSuit = null;
+        BidType leadingSuit = null;
         do {
             int currentPlayer = (startingPlayer + cardsPlayed) % game.getPlayers().size();
             for (ClientSocket clientSocket: clientSockets) {
